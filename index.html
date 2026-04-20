@@ -1167,47 +1167,39 @@
 
                 <div class="date-display" id="dateDisplay"></div>
 
-                <div class="form-group">
-                    <label class="form-label">เลือกร้าน</label>
-                    <select id="storeSelect" class="form-select">
-                        <option value="">-- เลือกร้าน --</option>
-                        <optgroup label="Supersports">
-                            <option value="SSP CentralWorld">SSP CentralWorld</option>
-                            <option value="SSP Siam Paragon">SSP Siam Paragon</option>
-                            <option value="SSP MegaBangna">SSP MegaBangna</option>
-                            <option value="SSP Central Ladprao">SSP Central Ladprao</option>
-                            <option value="SSP Future Park">SSP Future Park</option>
-                            <option value="SSP Central Pinklao">SSP Central Pinklao</option>
-                            <option value="SSP The Mall Bangkapi">SSP The Mall Bangkapi</option>
-                            <option value="SSP Central Westgate">SSP Central Westgate</option>
-                        </optgroup>
-                        <optgroup label="Columbia">
-                            <option value="Columbia Siam Discovery">Columbia Siam Discovery</option>
-                            <option value="Columbia CentralWorld">Columbia CentralWorld</option>
-                        </optgroup>
-                        <optgroup label="Fila">
-                            <option value="Fila EmQuartier">Fila EmQuartier</option>
-                            <option value="Fila Siam Square One">Fila Siam Square One</option>
-                        </optgroup>
-                        <optgroup label="Liverpool FC">
-                            <option value="LFC Shop Siam Center">LFC Shop Siam Center</option>
-                        </optgroup>
-                        <optgroup label="Reebok">
-                            <option value="Reebok CentralWorld">Reebok CentralWorld</option>
-                            <option value="Reebok MegaBangna">Reebok MegaBangna</option>
-                        </optgroup>
-                    </select>
+                <!-- Login Form (employee_id + PIN) -->
+                <div id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">รหัสพนักงาน (Employee ID)</label>
+                        <input type="text" id="employeeId" class="form-input" placeholder="เช่น SM001" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">PIN</label>
+                        <input type="password" id="pinInput" class="form-input" placeholder="กรอก PIN 4 หลัก" maxlength="6" inputmode="numeric">
+                    </div>
+
+                    <div id="loginError" style="color:#E8192C;text-align:center;margin-bottom:12px;display:none;font-size:14px;"></div>
+
+                    <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">เข้าสู่ระบบ</button>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">ชื่อผู้จัดการ</label>
-                    <input type="text" id="managerName" class="form-input" placeholder="กรอกชื่อของคุณ">
-                </div>
+                <!-- Store Selection (shown after login for roles that need it) -->
+                <div id="storeSelectionForm" style="display:none;">
+                    <div style="text-align:center;margin-bottom:16px;color:var(--primary-red);font-weight:600;" id="welcomeUser"></div>
 
-                <button class="btn btn-primary" onclick="startInspection()">เริ่มตรวจร้าน</button>
+                    <div class="form-group">
+                        <label class="form-label">เลือกร้านที่จะตรวจ</label>
+                        <select id="storeSelect" class="form-select">
+                            <option value="">-- กำลังโหลดร้าน... --</option>
+                        </select>
+                    </div>
 
-                <div class="link-text">
-                    <a onclick="goToManagement()">ดู Dashboard ผู้บริหาร</a>
+                    <button class="btn btn-primary" onclick="startInspection()">เริ่มตรวจร้าน</button>
+
+                    <div class="link-text" id="mgmtLink" style="display:none;">
+                        <a onclick="goToManagement()">ดู Dashboard ผู้บริหาร</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1372,7 +1364,26 @@
     </div>
 
     <script>
-        // ====== INDEXEDDB SETUP ======
+        // ====== API CONFIGURATION ======
+        const API_BASE = '/api';  // Same domain — Pages Functions
+        let authToken = null;
+        let currentUser = null;
+
+        async function apiCall(endpoint, options = {}) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+            try {
+                const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'API error');
+                return data;
+            } catch (err) {
+                console.warn('API call failed:', err.message);
+                return null;
+            }
+        }
+
+        // ====== INDEXEDDB SETUP (offline fallback) ======
         let db;
         const DB_NAME = 'SOC_DB';
         const INSPECTIONS_STORE = 'inspections';
@@ -1575,7 +1586,25 @@
         async function initApp() {
             await initDB();
             updateLoginDate();
-            loadManagementDashboard();
+            // Check for saved session
+            const savedToken = sessionStorage.getItem('soc_token');
+            const savedUser = sessionStorage.getItem('soc_user');
+            if (savedToken && savedUser) {
+                try {
+                    authToken = savedToken;
+                    currentUser = JSON.parse(savedUser);
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('storeSelectionForm').style.display = 'block';
+                    document.getElementById('welcomeUser').textContent = `สวัสดี ${currentUser.name} (${currentUser.role})`;
+                    if (currentUser.role === 'DM' || currentUser.role === 'GM') {
+                        document.getElementById('mgmtLink').style.display = 'block';
+                    }
+                    await loadStoresDropdown();
+                } catch (e) {
+                    sessionStorage.removeItem('soc_token');
+                    sessionStorage.removeItem('soc_user');
+                }
+            }
         }
 
         function updateLoginDate() {
@@ -1584,12 +1613,113 @@
         }
 
         // ====== LOGIN FLOW ======
+        async function handleLogin() {
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const pin = document.getElementById('pinInput').value.trim();
+            const errorEl = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+
+            errorEl.style.display = 'none';
+
+            if (!employeeId || !pin) {
+                errorEl.textContent = 'กรุณากรอกรหัสพนักงานและ PIN';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+            try {
+                const result = await apiCall('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ employee_id: employeeId, pin: pin })
+                });
+
+                if (!result || !result.token) {
+                    // Fallback: offline mode with manual entry
+                    errorEl.textContent = 'ไม่สามารถเข้าสู่ระบบได้ — ตรวจสอบรหัสพนักงานและ PIN';
+                    errorEl.style.display = 'block';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'เข้าสู่ระบบ';
+                    return;
+                }
+
+                // Store auth
+                authToken = result.token;
+                currentUser = result.user;
+                sessionStorage.setItem('soc_token', authToken);
+                sessionStorage.setItem('soc_user', JSON.stringify(currentUser));
+
+                // Show store selection
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('storeSelectionForm').style.display = 'block';
+                document.getElementById('welcomeUser').textContent = `สวัสดี ${currentUser.name} (${currentUser.role})`;
+
+                // Show management link for DM/GM
+                if (currentUser.role === 'DM' || currentUser.role === 'GM') {
+                    document.getElementById('mgmtLink').style.display = 'block';
+                }
+
+                // Load stores from API
+                await loadStoresDropdown();
+
+                // If SM, auto-select their store
+                if (currentUser.role === 'SM' && currentUser.store_name) {
+                    document.getElementById('storeSelect').value = currentUser.store_name;
+                }
+
+            } catch (err) {
+                errorEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                errorEl.style.display = 'block';
+            }
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'เข้าสู่ระบบ';
+        }
+
+        async function loadStoresDropdown() {
+            const select = document.getElementById('storeSelect');
+            const result = await apiCall('/stores');
+
+            if (result && result.stores) {
+                select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                // Group by brand
+                const brands = {};
+                result.stores.forEach(s => {
+                    if (!brands[s.brand]) brands[s.brand] = [];
+                    brands[s.brand].push(s);
+                });
+                Object.keys(brands).sort().forEach(brand => {
+                    const group = document.createElement('optgroup');
+                    group.label = brand;
+                    brands[brand].forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.name;
+                        opt.textContent = s.name;
+                        group.appendChild(opt);
+                    });
+                    select.appendChild(group);
+                });
+            } else {
+                // Fallback: hardcoded stores
+                select.innerHTML = `<option value="">-- เลือกร้าน --</option>
+                    <optgroup label="Supersports">
+                        <option value="SSP CentralWorld">SSP CentralWorld</option>
+                        <option value="SSP Siam Paragon">SSP Siam Paragon</option>
+                        <option value="SSP MegaBangna">SSP MegaBangna</option>
+                        <option value="SSP Central Ladprao">SSP Central Ladprao</option>
+                        <option value="SSP Future Park">SSP Future Park</option>
+                    </optgroup>`;
+            }
+        }
+
         function startInspection() {
             const storeName = document.getElementById('storeSelect').value;
-            const managerName = document.getElementById('managerName').value;
+            const managerName = currentUser ? currentUser.name : 'Unknown';
 
-            if (!storeName || !managerName.trim()) {
-                showToast('กรุณาเลือกร้านและกรอกชื่อผู้จัดการ', 'error');
+            if (!storeName) {
+                showToast('กรุณาเลือกร้านที่จะตรวจ', 'error');
                 return;
             }
 
@@ -1638,6 +1768,15 @@
                 items: {},
                 photos: {}
             };
+            // If logged in, show store selection; otherwise show login form
+            if (currentUser) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('storeSelectionForm').style.display = 'block';
+                document.getElementById('storeSelect').value = '';
+            } else {
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('storeSelectionForm').style.display = 'none';
+            }
             showScreen('loginScreen');
         }
 
@@ -2083,6 +2222,51 @@
 
         async function saveSummary() {
             try {
+                currentInspection.completed_at = new Date().toISOString();
+
+                // Prepare items array for API
+                const apiItems = [];
+                CATEGORIES.forEach(cat => {
+                    const catItems = currentInspection.items[cat.id];
+                    catItems.forEach((item, index) => {
+                        if (item.status) {
+                            apiItems.push({
+                                category_id: cat.id,
+                                category_name: cat.name,
+                                item_index: index,
+                                item_text: cat.items[index],
+                                status: item.status,
+                                photo_data: item.photo || null
+                            });
+                        }
+                    });
+                });
+
+                // Try API first
+                if (authToken) {
+                    const apiResult = await apiCall('/inspections', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            store_name: currentInspection.store_name,
+                            date: currentInspection.date,
+                            overall_score: currentInspection.overall_score,
+                            total_items: 39,
+                            passed_items: Object.values(currentInspection.categories_scores).reduce((sum, c) => sum + c.passed, 0),
+                            categories_scores: currentInspection.categories_scores,
+                            ai_summary: document.getElementById('aiReportText').textContent || '',
+                            items: apiItems
+                        })
+                    });
+
+                    if (apiResult && apiResult.id) {
+                        showToast('บันทึกผลตรวจเรียบร้อย (ซิงค์กับเซิร์ฟเวอร์แล้ว)', 'success');
+                        showScreen('loginScreen');
+                        resetAfterSave();
+                        return;
+                    }
+                }
+
+                // Fallback: save to IndexedDB
                 const transaction = db.transaction([INSPECTIONS_STORE], 'readwrite');
                 const store = transaction.objectStore(INSPECTIONS_STORE);
                 const result = await new Promise((resolve, reject) => {
@@ -2096,16 +2280,27 @@
                         overall_score: currentInspection.overall_score,
                         categories_scores: currentInspection.categories_scores,
                         items: currentInspection.items,
-                        status: 'completed'
+                        status: 'completed',
+                        synced: false
                     });
                     request.onsuccess = () => resolve(request.result);
                     request.onerror = () => reject(request.error);
                 });
-                showToast('บันทึกรายงานแล้ว', 'success');
-                goToLogin();
+                showToast('บันทึกรายงานแล้ว (ออฟไลน์ — จะซิงค์เมื่อมีสัญญาณ)', 'success');
+                showScreen('loginScreen');
+                resetAfterSave();
             } catch (error) {
                 console.error('Save error:', error);
                 showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+            }
+        }
+
+        function resetAfterSave() {
+            // Reset login form to store selection state (user stays logged in)
+            if (currentUser) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('storeSelectionForm').style.display = 'block';
+                document.getElementById('storeSelect').value = '';
             }
         }
 
@@ -2165,6 +2360,23 @@
 
         async function loadManagementDashboard() {
             try {
+                const today = new Date();
+                const defaultTo = today.toISOString().split('T')[0];
+                const defaultFrom = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+                document.getElementById('dateFrom').value = defaultFrom;
+                document.getElementById('dateTo').value = defaultTo;
+
+                // Try API first
+                if (authToken) {
+                    const dashData = await apiCall(`/dashboard?date=${defaultTo}`);
+                    if (dashData) {
+                        renderAPIDashboard(dashData);
+                        return;
+                    }
+                }
+
+                // Fallback: IndexedDB
                 const transaction = db.transaction([INSPECTIONS_STORE], 'readonly');
                 const store = transaction.objectStore(INSPECTIONS_STORE);
                 const allInspections = await new Promise((resolve, reject) => {
@@ -2173,17 +2385,50 @@
                     request.onerror = () => reject(request.error);
                 });
 
-                // Get date range
-                const today = new Date();
-                const defaultFrom = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                const defaultTo = today.toISOString().split('T')[0];
-
-                document.getElementById('dateFrom').value = defaultFrom;
-                document.getElementById('dateTo').value = defaultTo;
-
                 updateManagementStats(allInspections, defaultFrom, defaultTo);
             } catch (error) {
                 console.error('Error loading management dashboard:', error);
+            }
+        }
+
+        function renderAPIDashboard(data) {
+            // Total inspections this month
+            document.getElementById('totalInspections').textContent = data.overall.total_inspections || '0';
+
+            // Average score
+            const avgScore = data.overall.avg_score || 0;
+            document.getElementById('averageScore').textContent = avgScore ? `${avgScore}%` : '0%';
+
+            // Below target count
+            const belowTarget = (data.month_summary || []).filter(s => s.avg_score < 90).length;
+            document.getElementById('belowTarget').textContent = belowTarget;
+
+            // Store ranking table
+            const container = document.getElementById('storesTableContainer');
+            if (container && data.month_summary) {
+                container.innerHTML = '';
+                data.month_summary.forEach((store, i) => {
+                    let statusClass = 'status-good';
+                    if (store.avg_score < 80) statusClass = 'status-critical';
+                    else if (store.avg_score < 90) statusClass = 'status-warning';
+
+                    container.innerHTML += `
+                        <div class="table-row">
+                            <div>${i + 1}</div>
+                            <div>${store.store_name}</div>
+                            <div class="table-score">${store.avg_score}%</div>
+                            <div><span class="status-badge ${statusClass}">${store.avg_score >= 90 ? 'ผ่าน' : store.avg_score >= 80 ? 'ต้องปรับปรุง' : 'วิกฤต'}</span></div>
+                        </div>`;
+                });
+
+                // Show missing stores at the bottom
+                if (data.today && data.today.missing_stores && data.today.missing_stores.length > 0) {
+                    container.innerHTML += `
+                        <div style="padding:12px;color:#E8192C;font-size:13px;border-top:2px solid #eee;margin-top:8px;">
+                            ⚠️ ยังไม่ได้ตรวจวันนี้ (${data.today.missing_stores.length} ร้าน):
+                            ${data.today.missing_stores.join(', ')}
+                        </div>`;
+                }
             }
         }
 
