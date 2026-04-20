@@ -2429,7 +2429,25 @@
 
         // ===== INITIALIZATION =====
 
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            // Try Cloudflare Access first (CF sets cookie, API reads header)
+            try {
+                const resp = await fetch(app.apiBase + '/auth/me', {
+                    credentials: 'same-origin' // sends CF_Authorization cookie
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.user) {
+                        app.user = data.user;
+                        app.token = null; // CF Access handles auth via cookie
+                        saveSession();
+                        showHome();
+                        return;
+                    }
+                }
+            } catch (e) { /* CF Access not configured, fall through */ }
+
+            // Fallback: check saved session
             if (loadSession()) {
                 showHome();
             } else {
