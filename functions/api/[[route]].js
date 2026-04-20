@@ -1,5 +1,5 @@
 /**
- * SOC API — Cloudflare Pages Function (catch-all route)
+ * COE API — Center of Excellence Checklist (Cloudflare Pages Function)
  * Handles all /api/* requests
  *
  * Endpoints:
