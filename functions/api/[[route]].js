@@ -1,12 +1,13 @@
 /**
  * COE API — Center of Excellence Checklist (Cloudflare Pages Function)
- * v2: Email OTP auth, dynamic checklist templates, role-based access
+ * v3: Cloudflare Access OTP + dynamic checklist templates + role-based access
  *
- * Auth:
- *   POST /api/auth/request-otp    — Send OTP to email
- *   POST /api/auth/verify-otp     — Verify OTP, return JWT
- *   POST /api/auth/login          — Legacy login (employee_id + pin)
- *   GET  /api/auth/me             — Get current user profile
+ * Auth (handled by Cloudflare Access):
+ *   Cloudflare Access sends Cf-Access-Jwt-Assertion header with user email.
+ *   API reads email → looks up user in D1 → gets role/permissions.
+ *   Legacy OTP + employee_id/pin login kept as fallback.
+ *
+ *   GET  /api/auth/me             — Get current user profile (from CF Access or JWT)
  *
  * Stores:
  *   GET  /api/stores              — List stores (scoped by role)
@@ -88,9 +89,51 @@ async function verifyToken(token) {
 }
 
 async function authenticate(request) {
+  // Method 1: Cloudflare Access JWT (preferred)
+  const cfJwt = request.headers.get('Cf-Access-Jwt-Assertion');
+  if (cfJwt) {
+    try {
+      // Decode the CF Access JWT payload (middle part) to get email
+      const [, body] = cfJwt.split('.');
+      const payload = JSON.parse(atob(body));
+      if (payload.email) {
+        return { email: payload.email, _source: 'cf-access' };
+      }
+    } catch { /* fall through to other methods */ }
+  }
+
+  // Method 2: Our own JWT (Bearer token)
   const auth = request.headers.get('Authorization');
-  if (!auth || !auth.startsWith('Bearer ')) return null;
-  return verifyToken(auth.slice(7));
+  if (auth && auth.startsWith('Bearer ')) {
+    const token = auth.slice(7);
+    const payload = await verifyToken(token);
+    if (payload) return { ...payload, _source: 'jwt' };
+  }
+
+  return null;
+}
+
+// Resolve auth identity to full user object from DB
+async function resolveUser(authPayload, DB) {
+  if (!authPayload) return null;
+
+  // If from CF Access, look up by email
+  if (authPayload._source === 'cf-access') {
+    const user = await DB.prepare(
+      'SELECT id, employee_id, email, name, role, store_name, district, division FROM users WHERE email = ? AND active = 1'
+    ).bind(authPayload.email.toLowerCase()).first();
+    return user;
+  }
+
+  // If from our JWT, we already have role info but refresh from DB for latest
+  if (authPayload.id) {
+    const user = await DB.prepare(
+      'SELECT id, employee_id, email, name, role, store_name, district, division FROM users WHERE id = ? AND active = 1'
+    ).bind(authPayload.id).first();
+    return user || authPayload; // fallback to JWT payload if DB lookup fails
+  }
+
+  return authPayload;
 }
 
 // ── OTP Helpers ──────────────────────────────────────────────
@@ -298,10 +341,12 @@ export async function onRequest(context) {
     }
 
     // ════════════════════════════════════════════════════════
-    // PROTECTED ROUTES (require auth)
+    // PROTECTED ROUTES (require auth via CF Access or JWT)
     // ════════════════════════════════════════════════════════
-    const user = await authenticate(request);
-    if (!user) return errorResponse('Unauthorized', 401);
+    const authPayload = await authenticate(request);
+    if (!authPayload) return errorResponse('Unauthorized', 401);
+    const user = await resolveUser(authPayload, DB);
+    if (!user) return errorResponse('ไม่พบบัญชีผู้ใช้ กรุณาติดต่อผู้ดูแลระบบ', 403);
 
     // ── Auth: Me ────────────────────────────────────────
     if (path === '/api/auth/me' && method === 'GET') {
