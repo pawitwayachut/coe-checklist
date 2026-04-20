@@ -3,1063 +3,813 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <meta name="theme-color" content="#E8192C">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="COE Checklist">
-    <title>SUPERSPORTS COE - Center of Excellence Checklist</title>
+    <meta name="theme-color" content="#E8192C">
+    <title>Supersports Center of Excellence Checklist</title>
 
     <style>
+        /* ===== CSS VARIABLES & ROOT ===== */
         :root {
             --primary-red: #E8192C;
             --primary-green: #39B54A;
             --warning-yellow: #F5A623;
             --dark-blue: #1F3864;
-            --light-gray: #F5F5F5;
-            --white: #FFFFFF;
+            --light-gray: #f5f5f5;
+            --border-gray: #e0e0e0;
             --text-dark: #333333;
             --text-light: #666666;
-            --border-color: #EEEEEE;
-            --shadow: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+            --success-green: #39B54A;
+            --error-red: #E8192C;
+            --info-blue: #2196F3;
+
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+
+            /* Touch targets */
+            --touch-target: 44px;
+        }
+
+        /* ===== GLOBAL RESET & BASE ===== */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Thai', sans-serif;
+            background: #ffffff;
+            color: var(--text-dark);
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            -webkit-touch-callout: none;
         }
 
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
 
-        html, body {
-            height: 100%;
-            width: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: var(--light-gray);
-            color: var(--text-dark);
-            overflow: hidden;
-            position: fixed;
-        }
-
-        #app {
-            height: 100vh;
-            width: 100vw;
+        body {
             display: flex;
             flex-direction: column;
-            background: var(--light-gray);
-            padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+        }
+
+        /* ===== SCREEN CONTAINER ===== */
+        #app {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .screen {
             display: none;
             flex: 1;
-            flex-direction: column;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .screen.active {
             display: flex;
+            opacity: 1;
         }
 
-        /* ====== LOGIN SCREEN ====== */
-        #loginScreen {
+        /* ===== TYPOGRAPHY ===== */
+        h1, h2, h3, h4, h5, h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        h1 {
+            font-size: 24px;
+            line-height: 1.3;
+        }
+
+        h2 {
+            font-size: 20px;
+            line-height: 1.3;
+        }
+
+        h3 {
+            font-size: 18px;
+            line-height: 1.3;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* ===== BUTTON STYLES ===== */
+        button, input[type="button"], input[type="submit"] {
+            font-size: 16px;
+            padding: var(--spacing-md);
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            text-transform: none;
+            min-height: var(--touch-target);
+            font-family: inherit;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #cc162a;
+        }
+
+        .btn-primary:disabled {
+            background: var(--border-gray);
+            color: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
             background: var(--light-gray);
+            color: var(--text-dark);
+            border: 1px solid var(--border-gray);
         }
 
-        .login-container {
+        .btn-secondary:hover {
+            background: #ebebeb;
+        }
+
+        .btn-success {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2e8c39;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a52;
+        }
+
+        .btn-small {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 14px;
+            min-height: auto;
+        }
+
+        /* ===== INPUT STYLES ===== */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
+            background: white;
+            color: var(--text-dark);
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(232, 25, 44, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right var(--spacing-md) center;
+            padding-right: 32px;
+            cursor: pointer;
+        }
+
+        /* ===== HEADER & FOOTER ===== */
+        .header {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #cc162a 100%);
+            color: white;
+            padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
+            padding-top: max(var(--spacing-lg), env(safe-area-inset-top, 0px));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .header-greeting {
+            font-size: 18px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: var(--spacing-sm);
+            font-weight: 600;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--border-gray);
+            padding: var(--spacing-md);
+            padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
             display: flex;
-            flex-direction: column;
-            padding: 20px 16px 16px;
-            max-width: 500px;
-            margin: 0 auto;
-            height: 100%;
+            gap: var(--spacing-sm);
+            z-index: 100;
         }
 
+        .footer-single {
+            width: 100%;
+        }
+
+        .footer-double {
+            flex: 1;
+        }
+
+        .footer button {
+            width: 100%;
+        }
+
+        /* ===== CONTENT AREA ===== */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: var(--spacing-lg) var(--spacing-md);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* ===== FORM GROUPS ===== */
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-dark);
+        }
+
+        .form-group.required label::after {
+            content: ' *';
+            color: var(--error-red);
+        }
+
+        /* ===== LOGO SECTION ===== */
         .logo-section {
             text-align: center;
-            margin-bottom: 32px;
-            margin-top: 20px;
+            margin-bottom: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
         }
 
-        .logo-title {
-            font-size: 36px;
+        .logo-text {
+            font-size: 32px;
             font-weight: 700;
             color: var(--primary-red);
-            letter-spacing: 2px;
+            margin-bottom: var(--spacing-sm);
+            letter-spacing: -0.5px;
         }
 
         .logo-subtitle {
             font-size: 14px;
             color: var(--text-light);
-            margin-top: 4px;
+            margin: 0;
         }
 
-        .date-display {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-light);
-            margin-bottom: 28px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-            padding: 0 4px;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 12px 14px;
-            font-size: 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--white);
-            color: var(--text-dark);
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        .form-select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23333' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 40px;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary-red);
-            background-color: var(--white);
-        }
-
-        .btn {
-            padding: 14px 16px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            min-height: 48px;
+        /* ===== STEPS INDICATOR ===== */
+        .steps {
             display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
-        .btn-primary {
-            background: var(--primary-red);
-            color: var(--white);
-            width: 100%;
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-
-        .btn-secondary {
-            background: var(--dark-blue);
-            color: var(--white);
-            width: 100%;
-        }
-
-        .btn-success {
-            background: var(--primary-green);
-            color: var(--white);
-        }
-
-        .btn-danger {
-            background: #D32F2F;
-            color: var(--white);
-        }
-
-        .btn-small {
-            padding: 10px 12px;
-            font-size: 14px;
-            min-height: 44px;
-        }
-
-        .btn-icon {
-            width: 48px;
-            height: 48px;
-            padding: 0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .link-text {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 13px;
-        }
-
-        .link-text a {
-            color: var(--primary-red);
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* ====== DASHBOARD SCREEN ====== */
-        #dashboardScreen {
-            background: var(--light-gray);
-        }
-
-        .dashboard-header {
-            background: var(--white);
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-
-        .header-info {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 4px;
-        }
-
-        .header-store-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-        }
-
-        .progress-circle {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: conic-gradient(var(--primary-red) 0deg, var(--primary-red) var(--progress-percentage, 0deg), var(--border-color) var(--progress-percentage, 0deg), var(--border-color) 360deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            margin: 24px auto;
-            box-shadow: var(--shadow);
-        }
-
-        .progress-percentage {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--primary-red);
-        }
-
-        .progress-text {
-            font-size: 12px;
-            color: var(--text-light);
-            margin-top: 4px;
-        }
-
-        .dashboard-content {
-            padding: 16px;
-            padding-bottom: 100px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .category-card {
-            background: var(--white);
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 12px;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-left: 4px solid var(--border-color);
-        }
-
-        .category-card:active {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .category-card.completed {
-            border-left-color: var(--primary-green);
-        }
-
-        .category-card.in-progress {
-            border-left-color: var(--warning-yellow);
-        }
-
-        .category-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .category-icon {
-            font-size: 20px;
-            margin-right: 12px;
-        }
-
-        .category-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-dark);
-            flex: 1;
-        }
-
-        .category-status {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: var(--light-gray);
-            color: var(--text-light);
-        }
-
-        .category-status.completed {
-            background: var(--primary-green);
-            color: var(--white);
-        }
-
-        .category-status.in-progress {
-            background: var(--warning-yellow);
-            color: var(--text-dark);
-        }
-
-        .category-progress {
-            font-size: 12px;
-            color: var(--text-light);
-            margin-bottom: 6px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: var(--border-color);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--primary-green);
-            transition: width 0.3s ease;
-        }
-
-        .bottom-actions {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 16px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-            background: var(--white);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 8px;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-            z-index: 100;
-        }
-
-        .btn-submit {
-            flex: 1;
-        }
-
-        .btn-back {
-            flex: 1;
-            background: var(--dark-blue);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* ====== CATEGORY DETAIL SCREEN ====== */
-        #categoryScreen {
-            background: var(--light-gray);
-        }
-
-        .category-detail-header {
-            background: var(--white);
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .category-detail-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .category-detail-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .category-detail-count {
-            font-size: 12px;
-            color: var(--text-light);
-        }
-
-        .btn-back-icon {
-            width: 44px;
-            height: 44px;
-            padding: 0;
-            font-size: 18px;
-            background: transparent;
-            color: var(--primary-red);
-        }
-
-        .category-items {
-            padding: 16px;
-            padding-bottom: 100px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .item-card {
-            background: var(--white);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: var(--shadow);
-        }
-
-        .item-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-dark);
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-
-        .item-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .btn-pass, .btn-fail {
-            flex: 1;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 6px;
-            border: 2px solid var(--border-color);
-            background: var(--white);
-            color: var(--text-dark);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-height: 44px;
-        }
-
-        .btn-pass {
-            border-color: var(--primary-green);
-        }
-
-        .btn-pass.selected {
-            background: var(--primary-green);
-            color: var(--white);
-            border-color: var(--primary-green);
-        }
-
-        .btn-fail {
-            border-color: var(--primary-red);
-        }
-
-        .btn-fail.selected {
-            background: var(--primary-red);
-            color: var(--white);
-            border-color: var(--primary-red);
-        }
-
-        .item-camera {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .btn-camera {
-            flex: 1;
-            background: var(--light-gray);
-            color: var(--primary-red);
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            min-height: 44px;
-        }
-
-        .photo-preview {
-            position: relative;
-            margin-bottom: 12px;
-        }
-
-        .photo-thumbnail {
-            width: 100%;
-            max-height: 200px;
-            border-radius: 6px;
-            object-fit: cover;
-            background: var(--light-gray);
-        }
-
-        .photo-remove {
-            position: absolute;
-            top: 6px;
-            right: 6px;
+        .step {
             width: 32px;
             height: 32px;
-            background: rgba(0,0,0,0.5);
-            border: none;
             border-radius: 50%;
-            color: var(--white);
-            font-size: 18px;
-            cursor: pointer;
+            background: var(--border-gray);
+            color: var(--text-light);
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .item-note {
-            display: none;
-        }
-
-        .item-note.visible {
-            display: block;
-        }
-
-        .note-label {
-            font-size: 12px;
             font-weight: 600;
-            color: var(--primary-red);
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .note-textarea {
-            width: 100%;
-            padding: 10px;
             font-size: 14px;
-            border: 2px solid var(--primary-red);
-            border-radius: 6px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 80px;
-            -webkit-appearance: none;
-            appearance: none;
         }
 
-        .note-textarea:focus {
-            outline: none;
-            border-color: var(--primary-red);
-            background: #FFF8F8;
-        }
-
-        .note-warning {
-            font-size: 11px;
-            color: var(--primary-red);
-            margin-top: 4px;
-            display: none;
-        }
-
-        .note-warning.visible {
-            display: block;
-        }
-
-        .hidden-file-input {
-            display: none;
-        }
-
-        .category-actions {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 16px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-            background: var(--white);
-            border-top: 1px solid var(--border-color);
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-            z-index: 100;
-        }
-
-        .btn-complete {
-            width: 100%;
-        }
-
-        /* ====== SUMMARY SCREEN ====== */
-        #summaryScreen {
-            background: var(--light-gray);
-        }
-
-        .summary-header {
-            background: var(--white);
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .summary-info-row {
-            font-size: 12px;
-            color: var(--text-light);
-            margin-bottom: 4px;
-        }
-
-        .summary-content {
-            padding: 16px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .score-circle {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            margin: 16px auto;
-            box-shadow: var(--shadow);
-            font-weight: 700;
-        }
-
-        .score-circle.excellent {
-            background: conic-gradient(var(--primary-green) 0deg, var(--primary-green) 360deg);
-            color: var(--white);
-        }
-
-        .score-circle.good {
-            background: conic-gradient(var(--primary-green) 0deg, var(--primary-green) 360deg);
-            color: var(--white);
-        }
-
-        .score-circle.warning {
-            background: conic-gradient(var(--warning-yellow) 0deg, var(--warning-yellow) 360deg);
-            color: var(--text-dark);
-        }
-
-        .score-circle.critical {
-            background: conic-gradient(var(--primary-red) 0deg, var(--primary-red) 360deg);
-            color: var(--white);
-        }
-
-        .score-percentage {
-            font-size: 36px;
-        }
-
-        .score-label {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        .summary-section {
-            background: var(--white);
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 12px;
-            box-shadow: var(--shadow);
-        }
-
-        .summary-section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .category-score-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 13px;
-        }
-
-        .category-score-name {
-            flex: 1;
-        }
-
-        .category-score-bar {
-            flex: 1.5;
-            height: 6px;
-            background: var(--border-color);
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 0 10px;
-        }
-
-        .category-score-fill {
-            height: 100%;
-            background: var(--primary-green);
-        }
-
-        .category-score-pct {
-            width: 45px;
-            text-align: right;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .failed-items-list {
-            font-size: 12px;
-        }
-
-        .failed-item {
-            background: #FFF8F8;
-            border-left: 3px solid var(--primary-red);
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-        }
-
-        .failed-item-category {
-            font-weight: 600;
-            color: var(--primary-red);
-            font-size: 11px;
-        }
-
-        .failed-item-name {
-            color: var(--text-dark);
-            margin: 4px 0;
-        }
-
-        .failed-item-note {
-            color: var(--text-light);
-            font-size: 11px;
-            font-style: italic;
-            margin-top: 4px;
-        }
-
-        .failed-item-photo {
-            width: 100%;
-            max-height: 120px;
-            border-radius: 4px;
-            margin-top: 6px;
-            object-fit: cover;
-        }
-
-        .ai-report-section {
-            position: relative;
-        }
-
-        .ai-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            gap: 12px;
-        }
-
-        .ai-spinner {
-            font-size: 24px;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .ai-report-content {
-            display: none;
-        }
-
-        .ai-report-content.visible {
-            display: block;
-        }
-
-        .ai-report-text {
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--text-dark);
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .summary-actions {
-            padding: 16px;
-            background: var(--white);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-export {
-            flex: 1;
+        .step.active {
             background: var(--primary-red);
+            color: white;
         }
 
-        .btn-save-summary {
-            flex: 1;
+        .step.completed {
             background: var(--primary-green);
+            color: white;
         }
 
-        /* ====== MANAGEMENT DASHBOARD ====== */
-        #managementScreen {
-            background: var(--light-gray);
-        }
-
-        .management-header {
-            background: var(--white);
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .management-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 16px;
-        }
-
-        .date-range {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .date-input {
-            flex: 1;
-            padding: 10px;
-            font-size: 13px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--white);
-        }
-
-        .stats-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .stat-box {
-            flex: 1;
-            background: var(--light-gray);
-            padding: 12px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-red);
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-light);
-            margin-top: 4px;
-        }
-
-        .management-content {
-            padding: 16px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        .store-table {
+        /* ===== HOME MENU ===== */
+        .menu-item {
+            display: block;
             width: 100%;
-            background: var(--white);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .table-header {
-            display: grid;
-            grid-template-columns: 30px 1fr 80px 60px;
-            gap: 8px;
-            padding: 12px;
-            background: var(--dark-blue);
-            color: var(--white);
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .table-row {
-            display: grid;
-            grid-template-columns: 30px 1fr 80px 60px;
-            gap: 8px;
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .table-row:active {
-            background: var(--light-gray);
-        }
-
-        .table-rank {
-            font-weight: 700;
-            color: var(--text-light);
-        }
-
-        .table-store {
-            font-size: 13px;
+            background: white;
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            text-align: left;
+            font-size: 16px;
             font-weight: 500;
             color: var(--text-dark);
-        }
-
-        .table-brand {
-            font-size: 11px;
-            color: var(--text-light);
-        }
-
-        .table-score {
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .table-status {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .status-good {
-            background: var(--primary-green);
-        }
-
-        .status-warning {
-            background: var(--warning-yellow);
-        }
-
-        .status-critical {
-            background: var(--primary-red);
-        }
-
-        .management-actions {
-            padding: 16px;
-            background: var(--white);
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* ====== HISTORY SCREEN ====== */
-        #historyScreen {
-            background: var(--light-gray);
-        }
-
-        .history-header {
-            background: var(--white);
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .history-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .history-content {
-            padding: 16px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            background: var(--white);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            box-shadow: var(--shadow);
-            cursor: pointer;
             transition: all 0.2s ease;
+            text-decoration: none;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: var(--spacing-md);
+            min-height: var(--touch-target);
         }
 
-        .history-item:active {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+        .menu-item:active {
+            background: var(--light-gray);
+            transform: scale(0.98);
         }
 
-        .history-item-info {
+        .menu-icon {
+            font-size: 24px;
+            width: 32px;
+            flex-shrink: 0;
+        }
+
+        .menu-text {
             flex: 1;
         }
 
-        .history-store {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .history-date {
+        .menu-desc {
             font-size: 12px;
             color: var(--text-light);
             margin-top: 2px;
         }
 
-        .history-score {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--primary-red);
-            min-width: 50px;
+        /* ===== CARD STYLES ===== */
+        .card {
+            background: white;
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .card-header {
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-dark);
+        }
+
+        /* ===== CATEGORY CARDS ===== */
+        .category-card {
+            background: white;
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-card:active {
+            background: var(--light-gray);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .category-name {
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .category-icon {
+            font-size: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-gray);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-red);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-light);
             text-align: right;
         }
 
-        .history-actions {
-            padding: 16px;
-            background: var(--white);
-            border-top: 1px solid var(--border-color);
+        /* ===== ITEM CARDS ===== */
+        .item-card {
+            background: white;
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
         }
 
-        .btn-clear-history {
+        .item-card.photo-required {
+            border-color: var(--warning-yellow);
+            background: #fffaf0;
+        }
+
+        .item-text {
+            font-weight: 500;
+            color: var(--text-dark);
+            line-height: 1.4;
+        }
+
+        .photo-badge {
+            background: var(--warning-yellow);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .item-buttons {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-pass, .btn-fail {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: auto;
+        }
+
+        .btn-pass {
+            background: #e8f5e9;
+            color: var(--primary-green);
+        }
+
+        .btn-pass.active {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-fail {
+            background: #ffebee;
+            color: var(--error-red);
+        }
+
+        .btn-fail.active {
+            background: var(--error-red);
+            color: white;
+        }
+
+        .item-camera {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .item-camera button {
+            flex: 1;
+            background: #f0f0f0;
+            color: var(--text-dark);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            min-height: auto;
+        }
+
+        .item-camera.required button {
+            background: var(--warning-yellow);
+            color: white;
+        }
+
+        .photo-preview {
+            position: relative;
+            background: var(--light-gray);
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .photo-preview img {
             width: 100%;
-            background: var(--primary-red);
+            height: 100%;
+            object-fit: cover;
         }
 
-        /* ====== TOAST ====== */
+        .photo-remove {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .item-note {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* ===== SCORE SELECTOR ===== */
+        .score-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: var(--spacing-sm);
+        }
+
+        .score-btn {
+            padding: 12px;
+            border: 2px solid var(--border-gray);
+            background: white;
+            color: var(--text-dark);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: auto;
+        }
+
+        .score-btn:active {
+            transform: scale(0.95);
+        }
+
+        .score-btn.active {
+            background: var(--primary-red);
+            color: white;
+            border-color: var(--primary-red);
+        }
+
+        /* ===== PROGRESS CIRCLE ===== */
+        .progress-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .circle-svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .circle-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .circle-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* ===== SUMMARY STYLES ===== */
+        .summary-score {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #cc162a 100%);
+            color: white;
+            padding: var(--spacing-xl);
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .summary-score-number {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .summary-score-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .score-color-excellent {
+            background: linear-gradient(135deg, var(--primary-green) 0%, #2e8c39 100%);
+        }
+
+        .score-color-good {
+            background: linear-gradient(135deg, #4db8ff 0%, #2196F3 100%);
+        }
+
+        .score-color-warning {
+            background: linear-gradient(135deg, var(--warning-yellow) 0%, #e59400 100%);
+        }
+
+        .score-color-poor {
+            background: linear-gradient(135deg, var(--error-red) 0%, #cc162a 100%);
+        }
+
+        .failed-items {
+            margin: var(--spacing-lg) 0;
+        }
+
+        .failed-items-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-dark);
+        }
+
+        .failed-item {
+            background: #ffebee;
+            border-left: 4px solid var(--error-red);
+            padding: var(--spacing-md);
+            border-radius: 4px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .failed-item-text {
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .failed-item-note {
+            font-size: 13px;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* ===== DASHBOARD STYLES ===== */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-red);
+            line-height: 1;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .table th {
+            background: var(--light-gray);
+            padding: var(--spacing-md);
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ===== TOAST ===== */
         .toast {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: var(--spacing-lg);
+            left: var(--spacing-md);
+            right: var(--spacing-md);
             background: var(--text-dark);
-            color: var(--white);
-            padding: 12px 16px;
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 14px;
             z-index: 1000;
-            max-width: 280px;
-            text-align: center;
-            box-shadow: var(--shadow-md);
             animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .toast.success {
@@ -1067,10 +817,25 @@
         }
 
         .toast.error {
-            background: var(--primary-red);
+            background: var(--error-red);
         }
 
-        /* ====== MODAL ====== */
+        .toast.info {
+            background: var(--info-blue);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== MODAL ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -1078,1480 +843,1605 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-            align-items: center;
-            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 500;
+            align-items: flex-end;
+            padding: var(--spacing-md);
+            padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
         }
 
-        .modal-overlay.visible {
+        .modal-overlay.active {
             display: flex;
         }
 
         .modal {
-            background: var(--white);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 300px;
-            box-shadow: var(--shadow-md);
-            text-align: center;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: var(--spacing-lg);
+            width: 100%;
+            max-width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            animation: slideUp 0.3s ease;
         }
 
-        .modal-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 12px;
-        }
-
-        .modal-text {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 10px;
-            font-size: 13px;
+        .modal-header {
+            font-size: 18px;
             font-weight: 600;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            min-height: 44px;
-        }
-
-        .modal-btn-cancel {
-            background: var(--light-gray);
+            margin-bottom: var(--spacing-lg);
             color: var(--text-dark);
         }
 
-        .modal-btn-confirm {
-            background: var(--primary-red);
-            color: var(--white);
+        .modal-content {
+            margin-bottom: var(--spacing-lg);
         }
 
-        /* ====== RESPONSIVE ====== */
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 16px;
+        .modal-footer {
+            display: flex;
+            gap: var(--spacing-sm);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-gray);
+        }
+
+        .modal-footer button {
+            flex: 1;
+        }
+
+        /* ===== LOADING & EMPTY STATES ===== */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: var(--spacing-xl);
+            color: var(--text-light);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-gray);
+            border-top-color: var(--primary-red);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: var(--spacing-md);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        /* ===== HIDDEN INPUT (file upload) ===== */
+        #camera-input {
+            display: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 360px) {
+            :root {
+                --spacing-md: 12px;
+                --spacing-lg: 16px;
             }
 
-            .category-card {
-                margin-bottom: 10px;
-                padding: 12px;
+            h1 {
+                font-size: 20px;
             }
 
-            .item-card {
-                padding: 14px;
-                margin-bottom: 10px;
+            .content {
+                padding: var(--spacing-md);
+                padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            body {
+                overflow: auto;
+                position: static;
+            }
+
+            .footer,
+            .header {
+                display: none;
+            }
+
+            .screen {
+                opacity: 1;
+                display: block;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Hidden file input for camera/photos -->
+    <input type="file" id="camera-input" accept="image/*" capture="environment">
+
+    <!-- Main App Container -->
     <div id="app">
-        <!-- LOGIN SCREEN -->
-        <div id="loginScreen" class="screen active">
-            <div class="login-container">
-                <div class="logo-section">
-                    <div class="logo-title">SUPERSPORTS</div>
-                    <div class="logo-subtitle">Center of Excellence Checklist (COE)</div>
+        <!-- SCREEN 1: LOGIN -->
+        <div id="screen-login" class="screen active">
+            <div class="header">
+                <div class="logo-section" style="margin: 0; padding: 0;">
+                    <div class="logo-text">SUPERSPORTS</div>
+                    <p class="logo-subtitle">Center of Excellence Checklist (COE)</p>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="steps" id="login-steps">
+                    <div class="step active" id="step-1">1</div>
+                    <div class="step" id="step-2">2</div>
                 </div>
 
-                <div class="date-display" id="dateDisplay"></div>
-
-                <!-- Login Form (employee_id + PIN) -->
-                <div id="loginForm">
-                    <div class="form-group">
-                        <label class="form-label">รหัสพนักงาน (Employee ID)</label>
-                        <input type="text" id="employeeId" class="form-input" placeholder="เช่น SM001" autocomplete="off">
+                <!-- Step 1: Email -->
+                <div id="login-step1">
+                    <div class="form-group required">
+                        <label for="login-email">อีเมลที่ใช้งาน</label>
+                        <input
+                            type="email"
+                            id="login-email"
+                            placeholder="name@supersports.co.th"
+                            autocomplete="email"
+                        >
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">PIN</label>
-                        <input type="password" id="pinInput" class="form-input" placeholder="กรอก PIN 4 หลัก" maxlength="6" inputmode="numeric">
-                    </div>
-
-                    <div id="loginError" style="color:#E8192C;text-align:center;margin-bottom:12px;display:none;font-size:14px;"></div>
-
-                    <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">เข้าสู่ระบบ</button>
-                </div>
-
-                <!-- Store Selection (shown after login for roles that need it) -->
-                <div id="storeSelectionForm" style="display:none;">
-                    <div style="text-align:center;margin-bottom:16px;color:var(--primary-red);font-weight:600;" id="welcomeUser"></div>
-
-                    <div class="form-group">
-                        <label class="form-label">เลือกร้านที่จะตรวจ</label>
-                        <select id="storeSelect" class="form-select">
-                            <option value="">-- กำลังโหลดร้าน... --</option>
-                        </select>
-                    </div>
-
-                    <button class="btn btn-primary" onclick="startInspection()">เริ่มตรวจร้าน</button>
-
-                    <div class="link-text" id="mgmtLink" style="display:none;">
-                        <a onclick="goToManagement()">ดู Dashboard ผู้บริหาร</a>
+                    <p style="font-size: 13px; color: var(--text-light); margin-bottom: var(--spacing-lg); text-align: center;">
+                        โปรดใช้อีเมลที่ลงทะเบียน @supersports.co.th หรือ @crcsports.co.th
+                    </p>
+                    <div id="dev-otp-display" style="background: #fffaf0; border: 1px solid var(--warning-yellow); border-radius: 8px; padding: var(--spacing-md); margin-bottom: var(--spacing-lg); display: none;">
+                        <p style="font-size: 12px; color: var(--text-light); margin-bottom: 4px;">DEV OTP:</p>
+                        <p id="dev-otp-code" style="font-size: 16px; font-weight: 700; font-family: monospace; margin: 0; color: var(--warning-yellow);"></p>
                     </div>
                 </div>
+
+                <!-- Step 2: OTP -->
+                <div id="login-step2" style="display: none;">
+                    <p style="font-size: 14px; color: var(--text-light); margin-bottom: var(--spacing-lg); text-align: center;">
+                        ป้อนรหัส 6 หลักที่ส่งไปยัง <strong id="otp-email-display"></strong>
+                    </p>
+                    <div class="form-group required">
+                        <label for="login-otp">รหัส OTP</label>
+                        <input
+                            type="text"
+                            id="login-otp"
+                            placeholder="000000"
+                            maxlength="6"
+                            inputmode="numeric"
+                            autocomplete="one-time-code"
+                        >
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-light); margin-bottom: var(--spacing-lg); text-align: center;">
+                        หมดเวลา: <span id="otp-timer">5:00</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="footer">
+                <button id="login-btn-next" class="btn-primary footer-single">ถัดไป</button>
             </div>
         </div>
 
-        <!-- DASHBOARD SCREEN -->
-        <div id="dashboardScreen" class="screen">
-            <div class="dashboard-header">
-                <div class="header-info">ร้าน</div>
-                <div class="header-store-name" id="dashboardStoreName"></div>
-                <div class="header-info" id="dashboardDate"></div>
-                <div class="header-info">ผู้จัดการ: <span id="dashboardManager"></span></div>
+        <!-- SCREEN 2: HOME -->
+        <div id="screen-home" class="screen">
+            <div class="header">
+                <div class="header-greeting">
+                    สวัสดี <span id="home-user-name">User</span>
+                    <span class="role-badge" id="home-role-badge">SM</span>
+                </div>
+                <p class="header-subtitle" id="home-store-info" style="display: none;">ร้าน: <span id="home-store-name"></span></p>
             </div>
 
-            <div class="progress-circle" id="progressCircle">
-                <div class="progress-percentage" id="progressPercentage">0%</div>
-                <div class="progress-text" id="progressText">0/39 ข้อ</div>
+            <div class="content" id="home-menu-container">
+                <!-- Dynamically populated based on role -->
             </div>
 
-            <div class="dashboard-content">
-                <div id="categoriesContainer"></div>
-            </div>
-
-            <div class="bottom-actions">
-                <button class="btn btn-submit" id="submitBtn" onclick="goToSummary()" disabled>ส่งผลตรวจ</button>
-                <button class="btn btn-back" onclick="goToLogin()">ย้อนกลับ</button>
+            <div class="footer">
+                <button id="home-logout-btn" class="btn-secondary footer-single">ออกจากระบบ</button>
             </div>
         </div>
 
-        <!-- CATEGORY DETAIL SCREEN -->
-        <div id="categoryScreen" class="screen">
-            <div class="category-detail-header">
-                <div class="category-detail-title">
-                    <button class="btn btn-back-icon" onclick="goToDashboard()">←</button>
-                    <div>
-                        <div class="category-detail-name" id="categoryDetailName"></div>
-                        <div class="category-detail-count" id="categoryDetailCount"></div>
-                    </div>
+        <!-- SCREEN 3: STORE & TEMPLATE SELECTION -->
+        <div id="screen-selection" class="screen">
+            <div class="header">
+                <div class="header-title">เลือกร้านและแบบฟอร์ม</div>
+            </div>
+
+            <div class="content">
+                <div class="form-group required">
+                    <label for="selection-store">เลือกร้าน</label>
+                    <select id="selection-store">
+                        <option value="">-- เลือกร้าน --</option>
+                    </select>
+                </div>
+
+                <div class="form-group required">
+                    <label for="selection-template">เลือกแบบฟอร์มตรวจ</label>
+                    <select id="selection-template">
+                        <option value="">-- เลือกแบบฟอร์ม --</option>
+                    </select>
+                </div>
+
+                <div class="card">
+                    <p style="font-size: 13px; color: var(--text-light); margin: 0;">
+                        โปรดเลือกร้านและแบบฟอร์มตรวจที่ต้องการ จากนั้นคลิก "เริ่มตรวจ"
+                    </p>
                 </div>
             </div>
 
-            <div class="category-items" id="categoryItemsContainer"></div>
-
-            <div class="category-actions">
-                <button class="btn btn-complete btn-secondary" onclick="goToDashboard()">เสร็จสิ้นหมวดนี้</button>
+            <div class="footer">
+                <button id="selection-back-btn" class="btn-secondary footer-double">ย้อนกลับ</button>
+                <button id="selection-start-btn" class="btn-primary footer-double">เริ่มตรวจ</button>
             </div>
         </div>
 
-        <!-- SUMMARY SCREEN -->
-        <div id="summaryScreen" class="screen">
-            <div class="summary-header">
-                <div class="header-store-name" id="summaryStoreName"></div>
-                <div class="summary-info-row">วันที่: <span id="summaryDate"></span></div>
-                <div class="summary-info-row">ผู้จัดการ: <span id="summaryManager"></span></div>
-                <div class="summary-info-row">เวลา: <span id="summaryTime"></span></div>
+        <!-- SCREEN 4: INSPECTION DASHBOARD -->
+        <div id="screen-dashboard" class="screen">
+            <div class="header">
+                <div class="header-title" id="dashboard-store-name">ร้าน</div>
+                <p class="header-subtitle">
+                    วันที่: <span id="dashboard-date">--</span> | ผู้ตรวจ: <span id="dashboard-manager">--</span>
+                </p>
             </div>
 
-            <div class="summary-content">
-                <div class="score-circle" id="scoreCircle">
-                    <div class="score-percentage" id="scorePercentage">0%</div>
-                    <div class="score-label">คะแนน</div>
+            <div class="content">
+                <div class="progress-circle">
+                    <svg class="circle-svg" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="var(--primary-red)" stroke-width="8"
+                                stroke-dasharray="339.29200658" stroke-dashoffset="339.29200658"
+                                id="progress-circle-fill"
+                                style="transition: stroke-dashoffset 0.5s ease; transform-origin: 60px 60px; transform: rotate(-90deg);"
+                        />
+                    </svg>
+                    <div class="circle-text" id="progress-percentage">0%</div>
+                    <div class="circle-label">ความสำเร็จ</div>
                 </div>
 
-                <div class="summary-section">
-                    <div class="summary-section-title">📊 คะแนนตามหมวดหมู่</div>
-                    <div id="categoriesScoresContainer"></div>
-                </div>
-
-                <div class="summary-section">
-                    <div class="summary-section-title">❌ รายการที่ไม่ผ่าน</div>
-                    <div id="failedItemsContainer"></div>
-                </div>
-
-                <div class="summary-section ai-report-section">
-                    <div class="summary-section-title">🤖 สรุปรายงาน AI</div>
-                    <div class="ai-loading" id="aiLoading">
-                        <div class="ai-spinner">🤖</div>
-                        <div>AI กำลังวิเคราะห์ผลตรวจ...</div>
-                    </div>
-                    <div class="ai-report-content" id="aiReportContent">
-                        <div class="ai-report-text" id="aiReportText"></div>
-                    </div>
+                <div id="dashboard-categories-container">
+                    <!-- Category cards populated here -->
                 </div>
             </div>
 
-            <div class="summary-actions">
-                <button class="btn btn-save-summary" onclick="saveSummary()">บันทึกรายงาน</button>
-                <button class="btn btn-export" onclick="exportReport()">ส่งออก</button>
+            <div class="footer">
+                <button id="dashboard-back-btn" class="btn-secondary footer-double">ย้อนกลับ</button>
+                <button id="dashboard-submit-btn" class="btn-primary footer-double" disabled>ส่งผลตรวจ</button>
             </div>
         </div>
 
-        <!-- MANAGEMENT DASHBOARD -->
-        <div id="managementScreen" class="screen">
-            <div class="management-header">
-                <div class="management-title">Dashboard ผู้บริหาร</div>
-
-                <div class="date-range">
-                    <input type="date" id="dateFrom" class="date-input">
-                    <input type="date" id="dateTo" class="date-input">
-                </div>
-
-                <div class="stats-row">
-                    <div class="stat-box">
-                        <div class="stat-value" id="totalInspections">0</div>
-                        <div class="stat-label">การตรวจทั้งหมด</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="averageScore">0%</div>
-                        <div class="stat-label">คะแนนเฉลี่ย</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="belowTarget">0</div>
-                        <div class="stat-label">ต่ำกว่า 90%</div>
-                    </div>
-                </div>
+        <!-- SCREEN 5: CATEGORY DETAIL -->
+        <div id="screen-category" class="screen">
+            <div class="header">
+                <div class="header-title" id="category-title">หมวดหมู่</div>
+                <p class="header-subtitle" id="category-progress">0 / 0</p>
             </div>
 
-            <div class="management-content">
-                <div class="table-container">
-                    <div class="store-table">
-                        <div class="table-header">
-                            <div>อันดับ</div>
-                            <div>ร้าน</div>
-                            <div>คะแนน</div>
-                            <div>สถานะ</div>
-                        </div>
-                        <div id="storesTableContainer"></div>
-                    </div>
-                </div>
+            <div class="content" id="category-items-container">
+                <!-- Items rendered here -->
             </div>
 
-            <div class="management-actions">
-                <button class="btn btn-primary" onclick="exportManagementReport()">ส่งออกรายงาน</button>
-                <button class="btn btn-back" onclick="goToLogin()">ย้อนกลับ</button>
+            <div class="footer">
+                <button id="category-back-btn" class="btn-secondary footer-double">ย้อนกลับ</button>
+                <button id="category-complete-btn" class="btn-primary footer-double" disabled>เสร็จสิ้นหมวดนี้</button>
             </div>
         </div>
 
-        <!-- HISTORY SCREEN -->
-        <div id="historyScreen" class="screen">
-            <div class="history-header">
-                <div class="history-title">ประวัติการตรวจร้าน</div>
+        <!-- SCREEN 6: SUMMARY -->
+        <div id="screen-summary" class="screen">
+            <div class="header">
+                <div class="header-title">สรุปผลการตรวจ</div>
             </div>
 
-            <div class="history-content" id="historyContainer"></div>
+            <div class="content">
+                <div class="summary-score score-color-excellent" id="summary-score-card">
+                    <div class="summary-score-number" id="summary-overall-score">85</div>
+                    <div class="summary-score-label">คะแนนรวม</div>
+                </div>
 
-            <div class="history-actions">
-                <button class="btn btn-back" onclick="goToLogin()">ย้อนกลับ</button>
-                <button class="btn btn-clear-history" onclick="clearHistoryConfirm()">ล้างข้อมูล</button>
+                <h3 style="margin-bottom: var(--spacing-md);">คะแนนแต่ละหมวดหมู่</h3>
+                <div id="summary-categories-container">
+                    <!-- Category scores shown here -->
+                </div>
+
+                <div id="summary-failed-items" style="display: none;">
+                    <div class="failed-items-title">รายการที่ไม่ผ่าน</div>
+                    <div id="summary-failed-list">
+                        <!-- Failed items shown here -->
+                    </div>
+                </div>
+
+                <div style="margin-top: var(--spacing-lg); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-gray);">
+                    <h3 style="margin-bottom: var(--spacing-md);">สรุปอัตโนมัติ (AI)</h3>
+                    <div class="card">
+                        <p id="summary-ai-text" style="color: var(--text-light); font-size: 14px; line-height: 1.6;">
+                            --
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <button id="summary-back-btn" class="btn-secondary footer-double">ย้อนกลับ</button>
+                <button id="summary-export-btn" class="btn-secondary footer-double">ส่งออก</button>
+                <button id="summary-save-btn" class="btn-primary footer-double">บันทึกรายงาน</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 7: MANAGEMENT DASHBOARD -->
+        <div id="screen-mgmt-dashboard" class="screen">
+            <div class="header">
+                <div class="header-title" id="mgmt-dashboard-title">Dashboard</div>
+            </div>
+
+            <div class="content">
+                <div class="form-group">
+                    <label for="mgmt-date-filter">วันที่</label>
+                    <input type="date" id="mgmt-date-filter">
+                </div>
+
+                <div class="dashboard-stats" id="mgmt-stats-container">
+                    <!-- Stats populated here -->
+                </div>
+
+                <h3 style="margin: var(--spacing-lg) 0 var(--spacing-md);">ลำดับร้าน</h3>
+                <div class="table-responsive">
+                    <table class="table" id="mgmt-table">
+                        <thead>
+                            <tr>
+                                <th>ร้าน</th>
+                                <th>คะแนน</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mgmt-table-body">
+                            <!-- Rows populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="footer">
+                <button id="mgmt-back-btn" class="btn-secondary footer-single">ย้อนกลับ</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL -->
-    <div class="modal-overlay" id="modalOverlay">
+    <!-- MODAL FOR OTP ERROR -->
+    <div id="modal-error" class="modal-overlay">
         <div class="modal">
-            <div class="modal-title" id="modalTitle"></div>
-            <div class="modal-text" id="modalText"></div>
-            <div class="modal-buttons">
-                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">ยกเลิก</button>
-                <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">ตกลง</button>
+            <div class="modal-header">เกิดข้อผิดพลาด</div>
+            <div class="modal-content" id="modal-error-message"></div>
+            <div class="modal-footer">
+                <button id="modal-error-close" class="btn-primary">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR CONFIRMATION -->
+    <div id="modal-confirm" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header" id="modal-confirm-title">ยืนยัน</div>
+            <div class="modal-content" id="modal-confirm-message"></div>
+            <div class="modal-footer">
+                <button id="modal-confirm-no" class="btn-secondary">ยกเลิก</button>
+                <button id="modal-confirm-yes" class="btn-primary">ยืนยัน</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ====== API CONFIGURATION ======
-        const API_BASE = '/api';  // Same domain — Pages Functions
-        let authToken = null;
-        let currentUser = null;
+        // ===== APPLICATION STATE =====
+        const app = {
+            // Auth state
+            token: null,
+            user: null,
 
-        async function apiCall(endpoint, options = {}) {
-            const headers = { 'Content-Type': 'application/json' };
-            if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-            try {
-                const resp = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-                const data = await resp.json();
-                if (!resp.ok) throw new Error(data.error || 'API error');
-                return data;
-            } catch (err) {
-                console.warn('API call failed:', err.message);
-                return null;
-            }
-        }
-
-        // ====== INDEXEDDB SETUP (offline fallback) ======
-        let db;
-        const DB_NAME = 'COE_DB';
-        const INSPECTIONS_STORE = 'inspections';
-        const PHOTOS_STORE = 'photos';
-
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
-
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
-
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-
-                    if (!db.objectStoreNames.contains(INSPECTIONS_STORE)) {
-                        const inspStore = db.createObjectStore(INSPECTIONS_STORE, { keyPath: 'id', autoIncrement: true });
-                        inspStore.createIndex('store_name', 'store_name', { unique: false });
-                        inspStore.createIndex('date', 'date', { unique: false });
-                    }
-
-                    if (!db.objectStoreNames.contains(PHOTOS_STORE)) {
-                        const photoStore = db.createObjectStore(PHOTOS_STORE, { keyPath: 'id', autoIncrement: true });
-                        photoStore.createIndex('inspection_id', 'inspection_id', { unique: false });
-                    }
-                };
-            });
-        }
-
-        // ====== DATA STRUCTURES ======
-        const CATEGORIES = [
-            {
-                id: 1,
-                icon: '🏪',
-                name: 'ภายนอกร้าน',
-                englishName: 'Storefront',
-                items: [
-                    'ป้ายร้านสว่างและสะอาด',
-                    'กระจกหน้าร้านสะอาด ไม่มีรอยนิ้วมือ',
-                    'Display หน้าร้านจัดตาม Directive',
-                    'ประตูทางเข้าทำงานปกติ',
-                    'พื้นที่หน้าร้านสะอาด ไม่มีสิ่งกีดขวาง'
-                ]
+            // Current inspection state
+            currentStore: null,
+            currentTemplate: null,
+            currentInspection: {
+                store_name: '',
+                template_id: null,
+                date: new Date().toISOString().split('T')[0],
+                started_at: new Date().toISOString(),
+                items: {},
+                photos: {},
+                categoryScores: {}
             },
-            {
-                id: 2,
-                icon: '🛍️',
-                name: 'พื้นที่ขาย',
-                englishName: 'Sales Floor',
-                items: [
-                    'พื้นสะอาด ไม่มีรอยเปื้อน',
-                    'แสงสว่างทำงานครบทุกจุด',
-                    'อุณหภูมิแอร์เหมาะสม (22-25°C)',
-                    'กลิ่นในร้านปกติ ไม่มีกลิ่นไม่พึงประสงค์',
-                    'ทางเดินโล่ง ไม่มีสิ่งกีดขวาง',
-                    'เสียงเพลงในร้านเปิดตาม Playlist ที่กำหนด'
-                ]
-            },
-            {
-                id: 3,
-                icon: '👕',
-                name: 'สินค้าและการจัดแสดง',
-                englishName: 'Merchandising',
-                items: [
-                    'สินค้าจัดเรียงตาม Planogram',
-                    'Price Tag ครบถ้วน ถูกต้อง',
-                    'สินค้าโปรโมชั่นจัดแสดงตามที่กำหนด',
-                    'Mannequin แต่งตัวตาม Directive ปัจจุบัน',
-                    'สต็อคบนชั้นวางเพียงพอ ไม่มีช่องว่าง',
-                    'ป้าย Sale/Promotion ตรงกับระบบ POS'
-                ]
-            },
-            {
-                id: 4,
-                icon: '💳',
-                name: 'จุดชำระเงิน',
-                englishName: 'Cashier/POS',
-                items: [
-                    'POS ทำงานปกติ ทุกเครื่อง',
-                    'เครื่องรูดบัตร/QR Payment พร้อมใช้',
-                    'ถุง/กล่อง/อุปกรณ์บรรจุ พร้อม',
-                    'พื้นที่ Counter สะอาด เรียบร้อย',
-                    'ป้ายโปรโมชั่น ณ จุดชำระเงิน อัปเดตแล้ว'
-                ]
-            },
-            {
-                id: 5,
-                icon: '👗',
-                name: 'ห้องลองเสื้อผ้า',
-                englishName: 'Fitting Room',
-                items: [
-                    'ห้องสะอาด เรียบร้อย ไม่มีสินค้าค้าง',
-                    'แสงสว่างเพียงพอ',
-                    'กระจกสะอาด',
-                    'ที่แขวน/ตะขอ ใช้งานได้ครบ'
-                ]
-            },
-            {
-                id: 6,
-                icon: '📦',
-                name: 'คลังสินค้า',
-                englishName: 'Stockroom',
-                items: [
-                    'จัดเรียงเป็นระเบียบตามหมวดหมู่',
-                    'สินค้ารับเข้าวันนี้จัดเก็บเรียบร้อย',
-                    'ทางหนีไฟไม่มีสิ่งกีดขวาง',
-                    'อุณหภูมิ/ความชื้นเหมาะสม'
-                ]
-            },
-            {
-                id: 7,
-                icon: '👥',
-                name: 'พนักงาน',
-                englishName: 'Staff Readiness',
-                items: [
-                    'พนักงานครบตาม Shift Plan',
-                    'ยูนิฟอร์มสะอาด เรียบร้อย ตามมาตรฐาน',
-                    'Name Tag ติดครบทุกคน',
-                    'Morning Briefing ดำเนินการแล้ว'
-                ]
-            },
-            {
-                id: 8,
-                icon: '🔒',
-                name: 'ความปลอดภัย',
-                englishName: 'Safety & Security',
-                items: [
-                    'กล้อง CCTV ทำงานปกติ ครบทุกจุด',
-                    'ถังดับเพลิงพร้อมใช้ ไม่หมดอายุ',
-                    'ทางหนีไฟ ป้ายสว่าง ไม่มีสิ่งกีดขวาง',
-                    'Alarm/Sensor ทำงานปกติ',
-                    'ตู้ปฐมพยาบาล พร้อมและครบถ้วน'
-                ]
-            }
-        ];
+            currentCategoryId: null,
+            currentPhotoKey: null,
 
-        // ====== CURRENT INSPECTION STATE ======
-        let currentInspection = {
-            store_name: '',
-            store_brand: '',
-            manager_name: '',
-            date: '',
-            started_at: '',
-            completed_at: '',
-            items: {},
-            photos: {}
+            // API configuration
+            apiBase: '/api',
+
+            // UI state
+            currentScreen: 'login',
+            otpTimerId: null,
+            otpCountdown: 300
         };
 
-        let currentCategoryId = null;
+        // ===== UTILITY FUNCTIONS =====
 
-        // ====== UTILITY FUNCTIONS ======
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
-
-        function formatThaiDate(date) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            return new Intl.DateTimeFormat('th-TH', options).format(date);
-        }
-
-        function formatThaiDateTime(date) {
-            const d = new Date(date);
-            const timeStr = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateStr = formatThaiDate(d);
-            return `${dateStr} ${timeStr}`;
-        }
-
-        function showToast(message, type = 'success') {
+        function showToast(message, type = 'info', duration = 3000) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
         }
 
-        function showModal(title, text, onConfirm) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalText').textContent = text;
-            window.modalCallback = onConfirm;
-            document.getElementById('modalOverlay').classList.add('visible');
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
 
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('visible');
-            window.modalCallback = null;
-        }
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            app.currentScreen = screenId;
 
-        function confirmModal() {
-            if (window.modalCallback) {
-                window.modalCallback();
+            const activeScreen = document.querySelector('.screen.active');
+            if (activeScreen) {
+                activeScreen.scrollTop = 0;
             }
-            closeModal();
         }
 
-        // ====== INITIALIZATION ======
-        async function initApp() {
-            await initDB();
-            updateLoginDate();
-            // Check for saved session
-            const savedToken = sessionStorage.getItem('soc_token');
-            const savedUser = sessionStorage.getItem('soc_user');
-            if (savedToken && savedUser) {
+        function formatDateThai(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const day = date.getDate();
+            const month = thaiMonths[date.getMonth()];
+            const year = date.getFullYear() + 543;
+            return `${day} ${month} ${year}`;
+        }
+
+        function saveSession() {
+            if (app.token) {
+                sessionStorage.setItem('coe_token', app.token);
+            }
+            if (app.user) {
+                sessionStorage.setItem('coe_user', JSON.stringify(app.user));
+            }
+        }
+
+        function loadSession() {
+            const token = sessionStorage.getItem('coe_token');
+            const userStr = sessionStorage.getItem('coe_user');
+
+            if (token && userStr) {
+                app.token = token;
                 try {
-                    authToken = savedToken;
-                    currentUser = JSON.parse(savedUser);
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('storeSelectionForm').style.display = 'block';
-                    document.getElementById('welcomeUser').textContent = `สวัสดี ${currentUser.name} (${currentUser.role})`;
-                    if (currentUser.role === 'DM' || currentUser.role === 'GM') {
-                        document.getElementById('mgmtLink').style.display = 'block';
-                    }
-                    await loadStoresDropdown();
+                    app.user = JSON.parse(userStr);
+                    return true;
                 } catch (e) {
-                    sessionStorage.removeItem('soc_token');
-                    sessionStorage.removeItem('soc_user');
+                    return false;
                 }
             }
+            return false;
         }
 
-        function updateLoginDate() {
-            const today = new Date();
-            document.getElementById('dateDisplay').textContent = formatThaiDate(today);
+        function clearSession() {
+            app.token = null;
+            app.user = null;
+            sessionStorage.removeItem('coe_token');
+            sessionStorage.removeItem('coe_user');
         }
 
-        // ====== LOGIN FLOW ======
-        async function handleLogin() {
-            const employeeId = document.getElementById('employeeId').value.trim();
-            const pin = document.getElementById('pinInput').value.trim();
-            const errorEl = document.getElementById('loginError');
-            const loginBtn = document.getElementById('loginBtn');
+        async function apiCall(method, endpoint, body = null) {
+            const url = app.apiBase + endpoint;
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
 
-            errorEl.style.display = 'none';
-
-            if (!employeeId || !pin) {
-                errorEl.textContent = 'กรุณากรอกรหัสพนักงานและ PIN';
-                errorEl.style.display = 'block';
-                return;
+            if (app.token) {
+                options.headers['Authorization'] = `Bearer ${app.token}`;
             }
 
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+            if (body && (method === 'POST' || method === 'PUT')) {
+                options.body = JSON.stringify(body);
+            }
 
             try {
-                const result = await apiCall('/auth/login', {
-                    method: 'POST',
-                    body: JSON.stringify({ employee_id: employeeId, pin: pin })
-                });
+                const response = await fetch(url, options);
+                const data = await response.json();
 
-                if (!result || !result.token) {
-                    // Fallback: offline mode with manual entry
-                    errorEl.textContent = 'ไม่สามารถเข้าสู่ระบบได้ — ตรวจสอบรหัสพนักงานและ PIN';
-                    errorEl.style.display = 'block';
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'เข้าสู่ระบบ';
-                    return;
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || 'API Error');
                 }
 
-                // Store auth
-                authToken = result.token;
-                currentUser = result.user;
-                sessionStorage.setItem('soc_token', authToken);
-                sessionStorage.setItem('soc_user', JSON.stringify(currentUser));
-
-                // Show store selection
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('storeSelectionForm').style.display = 'block';
-                document.getElementById('welcomeUser').textContent = `สวัสดี ${currentUser.name} (${currentUser.role})`;
-
-                // Show management link for DM/GM
-                if (currentUser.role === 'DM' || currentUser.role === 'GM') {
-                    document.getElementById('mgmtLink').style.display = 'block';
-                }
-
-                // Load stores from API
-                await loadStoresDropdown();
-
-                // If SM, auto-select their store
-                if (currentUser.role === 'SM' && currentUser.store_name) {
-                    document.getElementById('storeSelect').value = currentUser.store_name;
-                }
-
-            } catch (err) {
-                errorEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
-                errorEl.style.display = 'block';
-            }
-
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'เข้าสู่ระบบ';
-        }
-
-        async function loadStoresDropdown() {
-            const select = document.getElementById('storeSelect');
-            const result = await apiCall('/stores');
-
-            if (result && result.stores) {
-                select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
-                // Group by brand
-                const brands = {};
-                result.stores.forEach(s => {
-                    if (!brands[s.brand]) brands[s.brand] = [];
-                    brands[s.brand].push(s);
-                });
-                Object.keys(brands).sort().forEach(brand => {
-                    const group = document.createElement('optgroup');
-                    group.label = brand;
-                    brands[brand].forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s.name;
-                        opt.textContent = s.name;
-                        group.appendChild(opt);
-                    });
-                    select.appendChild(group);
-                });
-            } else {
-                // Fallback: hardcoded stores
-                select.innerHTML = `<option value="">-- เลือกร้าน --</option>
-                    <optgroup label="Supersports">
-                        <option value="SSP CentralWorld">SSP CentralWorld</option>
-                        <option value="SSP Siam Paragon">SSP Siam Paragon</option>
-                        <option value="SSP MegaBangna">SSP MegaBangna</option>
-                        <option value="SSP Central Ladprao">SSP Central Ladprao</option>
-                        <option value="SSP Future Park">SSP Future Park</option>
-                    </optgroup>`;
+                return data;
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+                throw error;
             }
         }
 
-        function startInspection() {
-            const storeName = document.getElementById('storeSelect').value;
-            const managerName = currentUser ? currentUser.name : 'Unknown';
-
-            if (!storeName) {
-                showToast('กรุณาเลือกร้านที่จะตรวจ', 'error');
-                return;
-            }
-
-            // Get brand from store name
-            let brand = 'Supersports';
-            if (storeName.includes('Columbia')) brand = 'Columbia';
-            else if (storeName.includes('Fila')) brand = 'Fila';
-            else if (storeName.includes('LFC')) brand = 'Liverpool FC';
-            else if (storeName.includes('Reebok')) brand = 'Reebok';
-
-            currentInspection = {
-                store_name: storeName,
-                store_brand: brand,
-                manager_name: managerName,
-                date: new Date().toISOString().split('T')[0],
-                started_at: new Date().toISOString(),
-                completed_at: null,
-                items: {},
-                photos: {}
-            };
-
-            // Initialize items structure
-            CATEGORIES.forEach(cat => {
-                currentInspection.items[cat.id] = [];
-                cat.items.forEach(() => {
-                    currentInspection.items[cat.id].push({
-                        status: null, // 'pass' or 'fail'
-                        photo: null,
-                        note: '',
-                        timestamp: null
-                    });
-                });
-            });
-
-            goToDashboard();
+        function isValidEmailDomain(email) {
+            const allowedDomains = ['supersports.co.th', 'crcsports.co.th'];
+            const domain = email.split('@')[1]?.toLowerCase();
+            // Also allow VP's personal email for testing
+            if (email.toLowerCase() === 'pawit.wayachut@gmail.com') return true;
+            return domain && allowedDomains.includes(domain);
         }
 
-        function goToLogin() {
-            currentInspection = {
-                store_name: '',
-                store_brand: '',
-                manager_name: '',
-                date: '',
-                started_at: '',
-                completed_at: '',
-                items: {},
-                photos: {}
-            };
-            // If logged in, show store selection; otherwise show login form
-            if (currentUser) {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('storeSelectionForm').style.display = 'block';
-                document.getElementById('storeSelect').value = '';
-            } else {
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('storeSelectionForm').style.display = 'none';
-            }
-            showScreen('loginScreen');
+        function formatOtpTimer(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // ====== DASHBOARD ======
-        function goToDashboard() {
-            renderDashboard();
-            showScreen('dashboardScreen');
-        }
+        function calculateScore() {
+            let totalItems = 0;
+            let passedItems = 0;
+            let totalScore = 0;
+            const categoryScores = {};
 
-        function renderDashboard() {
-            document.getElementById('dashboardStoreName').textContent = currentInspection.store_name;
-            document.getElementById('dashboardDate').textContent = formatThaiDate(new Date(currentInspection.date));
-            document.getElementById('dashboardManager').textContent = currentInspection.manager_name;
+            for (const [categoryId, items] of Object.entries(app.currentInspection.items)) {
+                let catTotal = 0;
+                let catPassed = 0;
+                let catScore = 0;
 
-            const totalItems = 39;
-            let completedItems = 0;
-
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id] || [];
-                const categoryCompleted = items.filter(i => i.status !== null).length;
-                completedItems += categoryCompleted;
-            });
-
-            const percentage = Math.round((completedItems / totalItems) * 100);
-            document.getElementById('progressPercentage').textContent = percentage + '%';
-            document.getElementById('progressText').textContent = `${completedItems}/${totalItems} ข้อ`;
-            document.getElementById('progressCircle').style.setProperty('--progress-percentage', `${percentage * 3.6}deg`);
-
-            // Update submit button
-            document.getElementById('submitBtn').disabled = completedItems < totalItems;
-
-            // Render categories
-            const container = document.getElementById('categoriesContainer');
-            container.innerHTML = '';
-
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id] || [];
-                const completed = items.filter(i => i.status !== null).length;
-                const total = items.length;
-
-                let status = 'ยังไม่ตรวจ';
-                let statusClass = '';
-                if (completed === total) {
-                    status = 'เสร็จแล้ว';
-                    statusClass = 'completed';
-                } else if (completed > 0) {
-                    status = 'กำลังตรวจ';
-                    statusClass = 'in-progress';
+                for (const item of items) {
+                    if (item.item_type === 'score') {
+                        catTotal++;
+                        catScore += item.score_value || 0;
+                        totalScore += item.score_value || 0;
+                    } else {
+                        catTotal++;
+                        totalItems++;
+                        if (item.status === 'pass') {
+                            catPassed++;
+                            passedItems++;
+                        }
+                    }
                 }
 
-                const categoryProgress = Math.round((completed / total) * 100);
-
-                const card = document.createElement('div');
-                card.className = `category-card ${statusClass}`;
-                card.innerHTML = `
-                    <div class="category-header">
-                        <div class="category-icon">${cat.icon}</div>
-                        <div class="category-name">${cat.name}</div>
-                        <div class="category-status ${statusClass}">${status}</div>
-                    </div>
-                    <div class="category-progress">${completed}/${total} ข้อ</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${categoryProgress}%"></div>
-                    </div>
-                `;
-                card.onclick = () => goToCategory(cat.id);
-                container.appendChild(card);
-            });
-        }
-
-        // ====== CATEGORY DETAIL ======
-        function goToCategory(categoryId) {
-            currentCategoryId = categoryId;
-            renderCategoryDetail();
-            showScreen('categoryScreen');
-        }
-
-        function renderCategoryDetail() {
-            const category = CATEGORIES.find(c => c.id === currentCategoryId);
-            if (!category) return;
-
-            document.getElementById('categoryDetailName').textContent = category.name;
-            const items = currentInspection.items[currentCategoryId];
-            const completed = items.filter(i => i.status !== null).length;
-            document.getElementById('categoryDetailCount').textContent = `${completed}/${items.length} ข้อ`;
-
-            const container = document.getElementById('categoryItemsContainer');
-            container.innerHTML = '';
-
-            items.forEach((item, index) => {
-                const itemCard = document.createElement('div');
-                itemCard.className = 'item-card';
-                itemCard.id = `item-${index}`;
-
-                const itemText = category.items[index];
-                let passSelected = item.status === 'pass';
-                let failSelected = item.status === 'fail';
-
-                itemCard.innerHTML = `
-                    <div class="item-text">${itemText}</div>
-                    <div class="item-buttons">
-                        <button class="btn-pass ${passSelected ? 'selected' : ''}" onclick="setItemStatus(${currentCategoryId}, ${index}, 'pass')">✅ ผ่าน</button>
-                        <button class="btn-fail ${failSelected ? 'selected' : ''}" onclick="setItemStatus(${currentCategoryId}, ${index}, 'fail')">❌ ไม่ผ่าน</button>
-                    </div>
-                    <div class="item-camera">
-                        <button class="btn-camera" onclick="triggerCamera(${currentCategoryId}, ${index})">📷 ถ่ายรูป</button>
-                    </div>
-                    <div class="photo-preview" id="photo-preview-${index}">
-                        ${item.photo ? `<img src="${item.photo}" class="photo-thumbnail"><button class="photo-remove" onclick="removePhoto(${currentCategoryId}, ${index})">✕</button>` : ''}
-                    </div>
-                    <div class="item-note ${failSelected ? 'visible' : ''}" id="note-${index}">
-                        <label class="note-label">หมายเหตุ (บังคับ)</label>
-                        <textarea class="note-textarea" id="textarea-${index}" placeholder="กรอกรายละเอียด">${item.note || ''}</textarea>
-                        <div class="note-warning" id="warning-${index}">กรุณากรอกหมายเหตุและถ่ายรูป</div>
-                    </div>
-                `;
-
-                container.appendChild(itemCard);
-            });
-        }
-
-        function setItemStatus(categoryId, itemIndex, status) {
-            const item = currentInspection.items[categoryId][itemIndex];
-            item.status = status;
-            item.timestamp = new Date().toISOString();
-
-            // Clear note if switching to pass
-            if (status === 'pass') {
-                item.note = '';
-                item.photo = null;
+                if (catTotal > 0) {
+                    if (items[0]?.item_type === 'score') {
+                        categoryScores[categoryId] = Math.round((catScore / (catTotal * 5)) * 100);
+                    } else {
+                        categoryScores[categoryId] = Math.round((catPassed / catTotal) * 100);
+                    }
+                }
             }
 
-            renderCategoryDetail();
-            saveInspectionProgress();
+            app.currentInspection.categoryScores = categoryScores;
+
+            if (totalItems > 0) {
+                return Math.round((passedItems / totalItems) * 100);
+            } else if (Object.keys(categoryScores).length > 0) {
+                const avgScore = Object.values(categoryScores).reduce((a, b) => a + b, 0) / Object.keys(categoryScores).length;
+                return Math.round(avgScore);
+            }
+            return 0;
         }
 
-        function triggerCamera(categoryId, itemIndex) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.capture = 'environment';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    readAndCompressImage(file, categoryId, itemIndex);
-                }
-            };
-            input.click();
-        }
-
-        function readAndCompressImage(file, categoryId, itemIndex) {
+        function compressImage(file, callback) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
                     let width = img.width;
                     let height = img.height;
 
-                    // Resize to max 800px width
-                    const maxWidth = 800;
-                    if (width > maxWidth) {
-                        height = (height * maxWidth) / width;
-                        width = maxWidth;
+                    if (width > 800) {
+                        height = Math.round((height * 800) / width);
+                        width = 800;
                     }
 
                     canvas.width = width;
                     canvas.height = height;
-                    const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    currentInspection.items[categoryId][itemIndex].photo = compressedDataUrl;
-                    renderCategoryDetail();
-                    saveInspectionProgress();
+                    const compressed = canvas.toDataURL('image/jpeg', 0.8);
+                    callback(compressed);
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        function removePhoto(categoryId, itemIndex) {
-            currentInspection.items[categoryId][itemIndex].photo = null;
-            renderCategoryDetail();
-            saveInspectionProgress();
-        }
-
-        function goToDashboardFromCategory() {
-            // Save notes before leaving
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id] || [];
-                items.forEach((item, index) => {
-                    const textarea = document.getElementById(`textarea-${index}`);
-                    if (textarea) {
-                        item.note = textarea.value;
-                    }
-                });
-            });
-            saveInspectionProgress();
-            goToDashboard();
-        }
-
-        // Override the button to save notes
-        document.addEventListener('DOMContentLoaded', function() {
-            // This will be overridden properly when screen renders
-        });
-
-        // ====== SUMMARY SCREEN ======
-        async function goToSummary() {
-            // Save notes first
-            if (currentCategoryId) {
-                const items = currentInspection.items[currentCategoryId];
-                items.forEach((item, index) => {
-                    const textarea = document.getElementById(`textarea-${index}`);
-                    if (textarea && item.status === 'fail') {
-                        item.note = textarea.value;
-                        if (!item.note && !item.photo) {
-                            showToast('กรุณากรอกหมายเหตุและถ่ายรูปสำหรับรายการที่ไม่ผ่าน', 'error');
-                            return;
-                        }
-                    }
-                });
-            }
-
-            // Verify all items are checked
-            let allChecked = true;
-            let failedWithoutPhotoOrNote = false;
-
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id];
-                items.forEach((item, index) => {
-                    if (item.status === null) allChecked = false;
-                    if (item.status === 'fail' && (!item.photo || !item.note)) {
-                        failedWithoutPhotoOrNote = true;
-                    }
-                });
-            });
-
-            if (!allChecked) {
-                showToast('กรุณาตรวจทุกข้อ', 'error');
-                return;
-            }
-
-            if (failedWithoutPhotoOrNote) {
-                showToast('รายการที่ไม่ผ่านต้องมีรูปภาพและหมายเหตุ', 'error');
-                return;
-            }
-
-            currentInspection.completed_at = new Date().toISOString();
-            saveInspectionProgress();
-            renderSummary();
-            showScreen('summaryScreen');
-        }
-
-        function renderSummary() {
-            document.getElementById('summaryStoreName').textContent = currentInspection.store_name;
-            document.getElementById('summaryDate').textContent = formatThaiDate(new Date(currentInspection.date));
-            document.getElementById('summaryManager').textContent = currentInspection.manager_name;
-
-            const startTime = new Date(currentInspection.started_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-            const endTime = new Date(currentInspection.completed_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-            document.getElementById('summaryTime').textContent = `${startTime} - ${endTime}`;
-
-            // Calculate scores
-            let totalItems = 0;
-            let passedItems = 0;
-            let categoryScores = {};
-
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id];
-                const passed = items.filter(i => i.status === 'pass').length;
-                const total = items.length;
-                const score = Math.round((passed / total) * 100);
-                categoryScores[cat.id] = { name: cat.name, passed, total, score };
-                totalItems += total;
-                passedItems += passed;
-            });
-
-            const overallScore = Math.round((passedItems / totalItems) * 100);
-            currentInspection.overall_score = overallScore;
-            currentInspection.categories_scores = categoryScores;
-
-            // Update score circle
-            let scoreClass = 'excellent';
-            if (overallScore < 80) scoreClass = 'critical';
-            else if (overallScore < 90) scoreClass = 'warning';
-            else if (overallScore < 95) scoreClass = 'good';
-
-            const scoreCircle = document.getElementById('scoreCircle');
-            scoreCircle.className = `score-circle ${scoreClass}`;
-            document.getElementById('scorePercentage').textContent = overallScore + '%';
-
-            // Render category scores
-            const categoryContainer = document.getElementById('categoriesScoresContainer');
-            categoryContainer.innerHTML = '';
-            CATEGORIES.forEach(cat => {
-                const score = categoryScores[cat.id];
-                const categoryRow = document.createElement('div');
-                categoryRow.className = 'category-score-row';
-                categoryRow.innerHTML = `
-                    <div class="category-score-name">${cat.icon} ${score.name}</div>
-                    <div class="category-score-bar">
-                        <div class="category-score-fill" style="width: ${score.score}%"></div>
-                    </div>
-                    <div class="category-score-pct">${score.score}%</div>
-                `;
-                categoryContainer.appendChild(categoryRow);
-            });
-
-            // Render failed items
-            const failedContainer = document.getElementById('failedItemsContainer');
-            failedContainer.innerHTML = '';
-            let hasFailed = false;
-
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id];
-                items.forEach((item, index) => {
-                    if (item.status === 'fail') {
-                        hasFailed = true;
-                        const failedItem = document.createElement('div');
-                        failedItem.className = 'failed-item';
-                        failedItem.innerHTML = `
-                            <div class="failed-item-category">${cat.icon} ${cat.name}</div>
-                            <div class="failed-item-name">${cat.items[index]}</div>
-                            ${item.photo ? `<img src="${item.photo}" class="failed-item-photo">` : ''}
-                            ${item.note ? `<div class="failed-item-note">"${item.note}"</div>` : ''}
-                        `;
-                        failedContainer.appendChild(failedItem);
-                    }
-                });
-            });
-
-            if (!hasFailed) {
-                failedContainer.innerHTML = '<div style="text-align: center; color: var(--primary-green); font-weight: 600;">✅ ไม่มีรายการที่ไม่ผ่าน</div>';
-            }
-
-            // Generate AI summary after 2 seconds
-            setTimeout(() => generateAISummary(overallScore, categoryScores, totalItems, passedItems), 2000);
-        }
-
-        function generateAISummary(overallScore, categoryScores, totalItems, passedItems) {
-            let assessment = '';
-            if (overallScore >= 95) {
-                assessment = 'ดีมาก';
-            } else if (overallScore >= 90) {
-                assessment = 'ดี';
-            } else if (overallScore >= 80) {
-                assessment = 'ต้องปรับปรุง';
-            } else {
-                assessment = 'ต้องแก้ไขด่วน';
-            }
-
-            // Find perfect and poor categories
-            const perfectCategories = [];
-            const problemCategories = [];
-
-            CATEGORIES.forEach(cat => {
-                const score = categoryScores[cat.id];
-                if (score.score === 100) {
-                    perfectCategories.push(cat.name);
-                } else if (score.score < 90) {
-                    problemCategories.push(`${cat.name} (${score.score}%)`);
-                }
-            });
-
-            // Get failed items
+        function generateAISummary() {
+            const totalScore = calculateScore();
             const failedItems = [];
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id];
-                items.forEach((item, index) => {
+
+            for (const [categoryId, items] of Object.entries(app.currentInspection.items)) {
+                for (const item of items) {
                     if (item.status === 'fail') {
-                        failedItems.push(`${cat.name}: ${cat.items[index]}`);
+                        failedItems.push({
+                            text: item.item_text,
+                            note: item.note || ''
+                        });
                     }
-                });
-            });
-
-            // Rank by severity
-            const priorityActions = [];
-            const safetyIssues = [];
-            const customerFacingIssues = [];
-            const backOfficeIssues = [];
-
-            failedItems.forEach(item => {
-                if (item.includes('ความปลอดภัย') || item.includes('Safety') || item.includes('ไฟ') || item.includes('CCTV')) {
-                    safetyIssues.push(item);
-                } else if (item.includes('ภายนอก') || item.includes('พื้นที่ขาย') || item.includes('Display') || item.includes('Storefront') || item.includes('Sales Floor')) {
-                    customerFacingIssues.push(item);
-                } else {
-                    backOfficeIssues.push(item);
                 }
-            });
-
-            priorityActions.push(...safetyIssues, ...customerFacingIssues, ...backOfficeIssues);
-
-            let summary = `📊 สรุปผลการตรวจ: ${assessment}\n\n`;
-            summary += `คะแนนรวม: ${overallScore}% (${passedItems}/${totalItems} ข้อ)\n`;
-            summary += `สถานะ: ${assessment === 'ดีมาก' ? '✅ ผ่านเกณฑ์' : '⚠️ ต้องตรวจสอบ'}\n\n`;
-
-            if (perfectCategories.length > 0) {
-                summary += `✅ หมวดหมู่ที่ผ่านเกณฑ์:\n`;
-                perfectCategories.forEach(cat => {
-                    summary += `   • ${cat}\n`;
-                });
-                summary += '\n';
             }
 
-            if (problemCategories.length > 0) {
-                summary += `⚠️ หมวดหมู่ที่ต้องปรับปรุง:\n`;
-                problemCategories.forEach(cat => {
-                    summary += `   • ${cat}\n`;
-                });
-                summary += '\n';
-            }
+            let summary = '';
 
-            if (priorityActions.length > 0) {
-                summary += `🔴 เรื่องที่ต้องแก้ไขเร่งด่วน (จัดลำดับตามความสำคัญ):\n`;
-                priorityActions.slice(0, 5).forEach((action, i) => {
-                    summary += `   ${i + 1}. ${action}\n`;
-                });
-                summary += '\n';
-            }
-
-            summary += `📈 วิเคราะห์เพิ่มเติม:\n`;
-            summary += `   • ร้านนี้ได้คะแนน ${overallScore}% ซึ่ง`;
-            if (overallScore >= 90) {
-                summary += `สูงกว่าเป้าหมาย 90%\n`;
-                summary += `   • อยู่ในระดับสวนามสถิต (Top performers)\n`;
-                summary += `   • ให้ความสำคัญกับการตรวจสอบเพื่อรักษาความสม่ำเสมอ\n`;
-            } else if (overallScore >= 80) {
-                summary += `ต่ำกว่าเป้าหมาย 90% อยู่ ${90 - overallScore}%\n`;
-                summary += `   • ต้องเร่งแก้ไขปัญหาในไม่กี่วัน\n`;
-                summary += `   • มุ่งเน้นที่หมวดหมู่ปัญหากำลังตรวจสอบ\n`;
+            if (totalScore >= 95) {
+                summary = 'ผลการตรวจพบว่า ร้านได้รับการจัดการในมาตรฐานที่สูงมาก ทั้งในด้านการบริหารพื้นที่ ความสะอาด และการจัดแสดงสินค้า ให้ความสำคัญกับการรักษามาตรฐาน COE อย่างต่อเนื่อง';
+            } else if (totalScore >= 90) {
+                summary = 'ผลการตรวจพบว่า ร้านมีการจัดการที่ดี แต่มีบางจุดที่ต้องปรับปรุงเล็กน้อย แนะนำให้ติดตามการแก้ไขภายใน 1 สัปดาห์';
+            } else if (totalScore >= 80) {
+                summary = 'ผลการตรวจพบว่า ร้านมีจุดต่างๆ ที่ต้องปรับปรุง โดยเฉพาะในด้านความสะอาดและการจัดแสดงสินค้า แนะนำให้จัดทำแผนปรับปรุงฉับพลันภายใน 3 วัน';
             } else {
-                summary += `ต่ำกว่าเป้าหมาย 90% มาก (${90 - overallScore}% ต่ำกว่า)\n`;
-                summary += `   • ต้องแก้ไขอย่างเร่งด่วนในทันที\n`;
-                summary += `   • ต้องการการสนับสนุนจากผู้บริหาร\n`;
+                summary = 'ผลการตรวจพบว่า ร้านมีหลายจุดที่ต้องปรับปรุงเพื่อให้เข้าตามมาตรฐาน COE จำเป็นต้องจัดทำแผนปรับปรุงฉับพลันและติดตามอย่างใกล้ชิด';
             }
 
-            document.getElementById('aiReportText').textContent = summary;
-            document.getElementById('aiLoading').style.display = 'none';
-            document.getElementById('aiReportContent').classList.add('visible');
-        }
-
-        async function saveSummary() {
-            try {
-                currentInspection.completed_at = new Date().toISOString();
-
-                // Prepare items array for API
-                const apiItems = [];
-                CATEGORIES.forEach(cat => {
-                    const catItems = currentInspection.items[cat.id];
-                    catItems.forEach((item, index) => {
-                        if (item.status) {
-                            apiItems.push({
-                                category_id: cat.id,
-                                category_name: cat.name,
-                                item_index: index,
-                                item_text: cat.items[index],
-                                status: item.status,
-                                photo_data: item.photo || null
-                            });
-                        }
-                    });
-                });
-
-                // Try API first
-                if (authToken) {
-                    const apiResult = await apiCall('/inspections', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            store_name: currentInspection.store_name,
-                            date: currentInspection.date,
-                            overall_score: currentInspection.overall_score,
-                            total_items: 39,
-                            passed_items: Object.values(currentInspection.categories_scores).reduce((sum, c) => sum + c.passed, 0),
-                            categories_scores: currentInspection.categories_scores,
-                            ai_summary: document.getElementById('aiReportText').textContent || '',
-                            items: apiItems
-                        })
-                    });
-
-                    if (apiResult && apiResult.id) {
-                        showToast('บันทึกผลตรวจเรียบร้อย (ซิงค์กับเซิร์ฟเวอร์แล้ว)', 'success');
-                        showScreen('loginScreen');
-                        resetAfterSave();
-                        return;
-                    }
+            if (failedItems.length > 0) {
+                summary += ` จุดที่ไม่ผ่าน: ${failedItems.slice(0, 3).map(item => item.text).join(', ')}`;
+                if (failedItems.length > 3) {
+                    summary += ` และอื่นๆ ${failedItems.length - 3} รายการ`;
                 }
-
-                // Fallback: save to IndexedDB
-                const transaction = db.transaction([INSPECTIONS_STORE], 'readwrite');
-                const store = transaction.objectStore(INSPECTIONS_STORE);
-                const result = await new Promise((resolve, reject) => {
-                    const request = store.add({
-                        store_name: currentInspection.store_name,
-                        store_brand: currentInspection.store_brand,
-                        manager_name: currentInspection.manager_name,
-                        date: currentInspection.date,
-                        started_at: currentInspection.started_at,
-                        completed_at: currentInspection.completed_at,
-                        overall_score: currentInspection.overall_score,
-                        categories_scores: currentInspection.categories_scores,
-                        items: currentInspection.items,
-                        status: 'completed',
-                        synced: false
-                    });
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-                showToast('บันทึกรายงานแล้ว (ออฟไลน์ — จะซิงค์เมื่อมีสัญญาณ)', 'success');
-                showScreen('loginScreen');
-                resetAfterSave();
-            } catch (error) {
-                console.error('Save error:', error);
-                showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
             }
-        }
 
-        function resetAfterSave() {
-            // Reset login form to store selection state (user stays logged in)
-            if (currentUser) {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('storeSelectionForm').style.display = 'block';
-                document.getElementById('storeSelect').value = '';
-            }
+            return summary;
         }
 
         function exportReport() {
-            let content = `SUPERSPORTS Center of Excellence Checklist (COE) Report\n`;
-            content += `======================================\n\n`;
-            content += `Store: ${currentInspection.store_name}\n`;
-            content += `Brand: ${currentInspection.store_brand}\n`;
-            content += `Manager: ${currentInspection.manager_name}\n`;
-            content += `Date: ${formatThaiDate(new Date(currentInspection.date))}\n`;
-            content += `Started: ${formatThaiDateTime(currentInspection.started_at)}\n`;
-            content += `Completed: ${formatThaiDateTime(currentInspection.completed_at)}\n\n`;
+            const totalScore = calculateScore();
+            const date = new Date().toISOString().split('T')[0];
 
-            content += `OVERALL SCORE: ${currentInspection.overall_score}%\n\n`;
+            let reportText = 'รายงานผลการตรวจสอบ Center of Excellence (COE)\n';
+            reportText += '=====================================\n\n';
+            reportText += `ร้าน: ${app.currentStore?.name || '-'}\n`;
+            reportText += `วันที่: ${formatDateThai(date)}\n`;
+            reportText += `ผู้ตรวจ: ${app.user?.name || '-'}\n`;
+            reportText += `คะแนนรวม: ${totalScore}%\n\n`;
 
-            content += `Category Scores:\n`;
-            CATEGORIES.forEach(cat => {
-                const score = currentInspection.categories_scores[cat.id];
-                content += `  ${cat.name}: ${score.score}% (${score.passed}/${score.total})\n`;
-            });
+            reportText += 'คะแนนแต่ละหมวดหมู่:\n';
+            reportText += '---\n';
+            for (const [categoryId, score] of Object.entries(app.currentInspection.categoryScores)) {
+                reportText += `${categoryId}: ${score}%\n`;
+            }
 
-            content += `\nFailed Items:\n`;
-            let hasFailed = false;
-            CATEGORIES.forEach(cat => {
-                const items = currentInspection.items[cat.id];
-                items.forEach((item, index) => {
+            reportText += '\n';
+            reportText += 'รายการที่ไม่ผ่าน:\n';
+            reportText += '---\n';
+            let failCount = 0;
+            for (const [categoryId, items] of Object.entries(app.currentInspection.items)) {
+                for (const item of items) {
                     if (item.status === 'fail') {
-                        hasFailed = true;
-                        content += `  - ${cat.name}: ${cat.items[index]}\n`;
-                        if (item.note) content += `    Note: ${item.note}\n`;
-                    }
-                });
-            });
-
-            if (!hasFailed) {
-                content += `  None - All items passed!\n`;
-            }
-
-            // Create blob and download
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `COE_Report_${currentInspection.store_name}_${currentInspection.date}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            showToast('ส่งออกรายงาน', 'success');
-        }
-
-        // ====== MANAGEMENT DASHBOARD ======
-        function goToManagement() {
-            loadManagementDashboard();
-            showScreen('managementScreen');
-        }
-
-        async function loadManagementDashboard() {
-            try {
-                const today = new Date();
-                const defaultTo = today.toISOString().split('T')[0];
-                const defaultFrom = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-                document.getElementById('dateFrom').value = defaultFrom;
-                document.getElementById('dateTo').value = defaultTo;
-
-                // Try API first
-                if (authToken) {
-                    const dashData = await apiCall(`/dashboard?date=${defaultTo}`);
-                    if (dashData) {
-                        renderAPIDashboard(dashData);
-                        return;
-                    }
-                }
-
-                // Fallback: IndexedDB
-                const transaction = db.transaction([INSPECTIONS_STORE], 'readonly');
-                const store = transaction.objectStore(INSPECTIONS_STORE);
-                const allInspections = await new Promise((resolve, reject) => {
-                    const request = store.getAll();
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-
-                updateManagementStats(allInspections, defaultFrom, defaultTo);
-            } catch (error) {
-                console.error('Error loading management dashboard:', error);
-            }
-        }
-
-        function renderAPIDashboard(data) {
-            // Total inspections this month
-            document.getElementById('totalInspections').textContent = data.overall.total_inspections || '0';
-
-            // Average score
-            const avgScore = data.overall.avg_score || 0;
-            document.getElementById('averageScore').textContent = avgScore ? `${avgScore}%` : '0%';
-
-            // Below target count
-            const belowTarget = (data.month_summary || []).filter(s => s.avg_score < 90).length;
-            document.getElementById('belowTarget').textContent = belowTarget;
-
-            // Store ranking table
-            const container = document.getElementById('storesTableContainer');
-            if (container && data.month_summary) {
-                container.innerHTML = '';
-                data.month_summary.forEach((store, i) => {
-                    let statusClass = 'status-good';
-                    if (store.avg_score < 80) statusClass = 'status-critical';
-                    else if (store.avg_score < 90) statusClass = 'status-warning';
-
-                    container.innerHTML += `
-                        <div class="table-row">
-                            <div>${i + 1}</div>
-                            <div>${store.store_name}</div>
-                            <div class="table-score">${store.avg_score}%</div>
-                            <div><span class="status-badge ${statusClass}">${store.avg_score >= 90 ? 'ผ่าน' : store.avg_score >= 80 ? 'ต้องปรับปรุง' : 'วิกฤต'}</span></div>
-                        </div>`;
-                });
-
-                // Show missing stores at the bottom
-                if (data.today && data.today.missing_stores && data.today.missing_stores.length > 0) {
-                    container.innerHTML += `
-                        <div style="padding:12px;color:#E8192C;font-size:13px;border-top:2px solid #eee;margin-top:8px;">
-                            ⚠️ ยังไม่ได้ตรวจวันนี้ (${data.today.missing_stores.length} ร้าน):
-                            ${data.today.missing_stores.join(', ')}
-                        </div>`;
-                }
-            }
-        }
-
-        function updateManagementStats(allInspections, dateFrom, dateTo) {
-            // Filter by date range
-            const filtered = allInspections.filter(insp => insp.date >= dateFrom && insp.date <= dateTo);
-
-            document.getElementById('totalInspections').textContent = filtered.length || '0';
-
-            let totalScore = 0;
-            let belowTarget = 0;
-            let storeScores = {};
-
-            filtered.forEach(insp => {
-                totalScore += insp.overall_score || 0;
-                if ((insp.overall_score || 0) < 90) belowTarget++;
-
-                if (!storeScores[insp.store_name]) {
-                    storeScores[insp.store_name] = {
-                        name: insp.store_name,
-                        brand: insp.store_brand,
-                        scores: []
-                    };
-                }
-                storeScores[insp.store_name].scores.push(insp.overall_score || 0);
-            });
-
-            const avgScore = filtered.length > 0 ? Math.round(totalScore / filtered.length) : 0;
-            document.getElementById('averageScore').textContent = avgScore + '%';
-            document.getElementById('belowTarget').textContent = belowTarget;
-
-            // Rank stores
-            const storeRankings = Object.values(storeScores).map(store => {
-                const avgStoreScore = Math.round(store.scores.reduce((a, b) => a + b, 0) / store.scores.length);
-                return { ...store, avgScore: avgStoreScore };
-            }).sort((a, b) => b.avgScore - a.avgScore);
-
-            // Render table
-            const tableContainer = document.getElementById('storesTableContainer');
-            tableContainer.innerHTML = '';
-
-            storeRankings.forEach((store, index) => {
-                let statusClass = 'status-good';
-                if (store.avgScore < 80) statusClass = 'status-critical';
-                else if (store.avgScore < 90) statusClass = 'status-warning';
-
-                const row = document.createElement('div');
-                row.className = 'table-row';
-                row.innerHTML = `
-                    <div class="table-rank">${index + 1}</div>
-                    <div>
-                        <div class="table-store">${store.name}</div>
-                        <div class="table-brand">${store.brand}</div>
-                    </div>
-                    <div class="table-score">${store.avgScore}%</div>
-                    <div class="table-status ${statusClass}"></div>
-                `;
-                tableContainer.appendChild(row);
-            });
-        }
-
-        function exportManagementReport() {
-            showToast('ระบบกำลังสร้างรายงาน...', 'success');
-            // Implementation for CSV export
-        }
-
-        // ====== PROGRESS SAVING ======
-        function saveInspectionProgress() {
-            // Auto-save to IndexedDB
-            // This would be called whenever data changes
-        }
-
-        // ====== CLEAR HISTORY ======
-        function clearHistoryConfirm() {
-            showModal('ล้างข้อมูล', 'คุณแน่ใจหรือว่าจะล้างประวัติการตรวจทั้งหมด?', () => {
-                clearHistory();
-            });
-        }
-
-        async function clearHistory() {
-            try {
-                const transaction = db.transaction([INSPECTIONS_STORE, PHOTOS_STORE], 'readwrite');
-                const inspStore = transaction.objectStore(INSPECTIONS_STORE);
-                const photoStore = transaction.objectStore(PHOTOS_STORE);
-
-                await new Promise((resolve, reject) => {
-                    const clearInsp = inspStore.clear();
-                    const clearPhoto = photoStore.clear();
-
-                    clearInsp.onerror = () => reject(clearInsp.error);
-                    clearPhoto.onerror = () => reject(clearPhoto.error);
-
-                    transaction.oncomplete = () => resolve();
-                });
-
-                showToast('ล้างข้อมูลแล้ว', 'success');
-                goToLogin();
-            } catch (error) {
-                console.error('Clear error:', error);
-                showToast('เกิดข้อผิดพลาดในการล้างข้อมูล', 'error');
-            }
-        }
-
-        // Fix category detail back button
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-back-icon')) {
-                // Save notes before leaving
-                CATEGORIES.forEach(cat => {
-                    const items = currentInspection.items[cat.id] || [];
-                    items.forEach((item, index) => {
-                        const textarea = document.getElementById(`textarea-${index}`);
-                        if (textarea && item.status === 'fail') {
-                            item.note = textarea.value;
+                        failCount++;
+                        reportText += `${failCount}. ${item.item_text}\n`;
+                        if (item.note) {
+                            reportText += `   หมายเหตุ: ${item.note}\n`;
                         }
+                    }
+                }
+            }
+
+            if (failCount === 0) {
+                reportText += 'ไม่มี\n';
+            }
+
+            reportText += '\n';
+            reportText += 'สรุปอัตโนมัติ (AI):\n';
+            reportText += '---\n';
+            reportText += generateAISummary() + '\n';
+
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(reportText));
+            element.setAttribute('download', `COE_Report_${date}.txt`);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+
+            showToast('ส่งออกรายงานสำเร็จ', 'success');
+        }
+
+        function showConfirm(title, message, onConfirm, onCancel) {
+            document.getElementById('modal-confirm-title').textContent = title;
+            document.getElementById('modal-confirm-message').textContent = message;
+
+            const confirmBtn = document.getElementById('modal-confirm-yes');
+            const cancelBtn = document.getElementById('modal-confirm-no');
+
+            confirmBtn.onclick = () => {
+                closeModal('modal-confirm');
+                if (onConfirm) onConfirm();
+            };
+
+            cancelBtn.onclick = () => {
+                closeModal('modal-confirm');
+                if (onCancel) onCancel();
+            };
+
+            document.getElementById('modal-confirm').classList.add('active');
+        }
+
+        // ===== LOGIN SCREEN HANDLERS =====
+
+        document.getElementById('login-btn-next').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const otpInput = document.getElementById('login-otp');
+
+            // Step 1: Request OTP
+            if (document.getElementById('login-step1').style.display !== 'none') {
+                if (!email) {
+                    showToast('กรุณาป้อนอีเมล', 'error');
+                    return;
+                }
+
+                if (!isValidEmailDomain(email)) {
+                    showToast('โปรดใช้อีเมล @supersports.co.th หรือ @crcsports.co.th', 'error');
+                    return;
+                }
+
+                try {
+                    const result = await apiCall('POST', '/auth/request-otp', { email });
+
+                    if (result.dev_otp) {
+                        document.getElementById('dev-otp-code').textContent = result.dev_otp;
+                        document.getElementById('dev-otp-display').style.display = 'block';
+                    }
+
+                    document.getElementById('login-step1').style.display = 'none';
+                    document.getElementById('login-step2').style.display = 'block';
+                    document.getElementById('step-1').classList.remove('active');
+                    document.getElementById('step-1').classList.add('completed');
+                    document.getElementById('step-2').classList.add('active');
+                    document.getElementById('otp-email-display').textContent = email;
+                    document.getElementById('login-btn-next').textContent = 'ยืนยัน';
+
+                    app.otpCountdown = 300;
+                    if (app.otpTimerId) clearInterval(app.otpTimerId);
+                    app.otpTimerId = setInterval(() => {
+                        app.otpCountdown--;
+                        document.getElementById('otp-timer').textContent = formatOtpTimer(app.otpCountdown);
+                        if (app.otpCountdown <= 0) {
+                            clearInterval(app.otpTimerId);
+                            document.getElementById('login-btn-next').disabled = true;
+                        }
+                    }, 1000);
+
+                    otpInput.focus();
+                    showToast('ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว', 'success');
+                } catch (error) {
+                    showToast('ไม่สามารถส่งรหัส OTP ได้', 'error');
+                }
+            }
+            // Step 2: Verify OTP
+            else {
+                const otp = otpInput.value.trim();
+
+                if (!otp || otp.length !== 6) {
+                    showToast('กรุณาป้อนรหัส 6 หลัก', 'error');
+                    return;
+                }
+
+                try {
+                    const result = await apiCall('POST', '/auth/verify-otp', {
+                        email: email,
+                        code: otp
                     });
-                });
-                saveInspectionProgress();
-                goToDashboard();
+
+                    app.token = result.token;
+                    app.user = result.user;
+                    saveSession();
+
+                    clearInterval(app.otpTimerId);
+                    showToast('เข้าสู่ระบบสำเร็จ', 'success');
+                    showHome();
+                } catch (error) {
+                    showToast('รหัส OTP ไม่ถูกต้อง', 'error');
+                    otpInput.value = '';
+                    otpInput.focus();
+                }
             }
         });
 
-        // Initialize app on load
-        window.addEventListener('DOMContentLoaded', initApp);
+        // ===== HOME SCREEN HANDLERS =====
+
+        function showHome() {
+            document.getElementById('home-user-name').textContent = app.user?.name || 'User';
+            const roleBadgeMap = {
+                'SM': 'Store Manager',
+                'DM': 'District Manager',
+                'GM': 'General Manager',
+                'VP': 'Vice President'
+            };
+            document.getElementById('home-role-badge').textContent = roleBadgeMap[app.user?.role] || app.user?.role;
+
+            if (app.user?.store_name) {
+                document.getElementById('home-store-name').textContent = app.user.store_name;
+                document.getElementById('home-store-info').style.display = 'block';
+            }
+
+            const container = document.getElementById('home-menu-container');
+            container.innerHTML = '';
+
+            const role = app.user?.role;
+
+            if (role === 'SM') {
+                container.innerHTML = `
+                    <button class="menu-item" onclick="app.goToSelection()">
+                        <div class="menu-icon">📋</div>
+                        <div class="menu-text">
+                            <div>เริ่มตรวจร้าน</div>
+                            <div class="menu-desc">สร้างการตรวจสอบใหม่</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToHistory()">
+                        <div class="menu-icon">📊</div>
+                        <div class="menu-text">
+                            <div>ประวัติการตรวจ</div>
+                            <div class="menu-desc">ดูผลการตรวจในอดีต</div>
+                        </div>
+                    </button>
+                `;
+            } else if (role === 'DM') {
+                container.innerHTML = `
+                    <button class="menu-item" onclick="app.goToSelection()">
+                        <div class="menu-icon">📋</div>
+                        <div class="menu-text">
+                            <div>Checklists ของฉัน</div>
+                            <div class="menu-desc">แบบฟอร์มที่กำหนดให้</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToReview()">
+                        <div class="menu-icon">👁️</div>
+                        <div class="menu-text">
+                            <div>ตรวจสอบ COE ร้านในเขต</div>
+                            <div class="menu-desc">ตรวจสอบผลการตรวจ</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToMgmtDashboard()">
+                        <div class="menu-icon">📊</div>
+                        <div class="menu-text">
+                            <div>Dashboard เขต</div>
+                            <div class="menu-desc">สถิติการตรวจเขตของคุณ</div>
+                        </div>
+                    </button>
+                `;
+            } else if (role === 'GM') {
+                container.innerHTML = `
+                    <button class="menu-item" onclick="app.goToSelection()">
+                        <div class="menu-icon">📋</div>
+                        <div class="menu-text">
+                            <div>Checklists ของฉัน</div>
+                            <div class="menu-desc">แบบฟอร์มที่กำหนดให้</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToReview()">
+                        <div class="menu-icon">👁️</div>
+                        <div class="menu-text">
+                            <div>ตรวจสอบ</div>
+                            <div class="menu-desc">ตรวจสอบผลการตรวจ SM และ DM</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToMgmtDashboard()">
+                        <div class="menu-icon">📊</div>
+                        <div class="menu-text">
+                            <div>Dashboard Division</div>
+                            <div class="menu-desc">สถิติการตรวจภาค</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToUserMgmt()">
+                        <div class="menu-icon">👤</div>
+                        <div class="menu-text">
+                            <div>จัดการ Users</div>
+                            <div class="menu-desc">เพิ่ม แก้ไข ลบผู้ใช้</div>
+                        </div>
+                    </button>
+                `;
+            } else if (role === 'VP') {
+                container.innerHTML = `
+                    <button class="menu-item" onclick="app.goToReview()">
+                        <div class="menu-icon">👁️</div>
+                        <div class="menu-text">
+                            <div>ตรวจสอบทั้งหมด</div>
+                            <div class="menu-desc">ตรวจสอบผลการตรวจทุกระดับ</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToMgmtDashboard()">
+                        <div class="menu-icon">📊</div>
+                        <div class="menu-text">
+                            <div>Dashboard ภาพรวม</div>
+                            <div class="menu-desc">สถิติการตรวจทั้งองค์กร</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToUserMgmt()">
+                        <div class="menu-icon">👤</div>
+                        <div class="menu-text">
+                            <div>จัดการ Users</div>
+                            <div class="menu-desc">เพิ่ม แก้ไข ลบผู้ใช้</div>
+                        </div>
+                    </button>
+                    <button class="menu-item" onclick="app.goToTemplateMgmt()">
+                        <div class="menu-icon">📝</div>
+                        <div class="menu-text">
+                            <div>จัดการ Checklist Templates</div>
+                            <div class="menu-desc">สร้างและแก้ไขแบบฟอร์ม</div>
+                        </div>
+                    </button>
+                `;
+            }
+
+            switchScreen('home');
+        }
+
+        document.getElementById('home-logout-btn').addEventListener('click', () => {
+            showConfirm('ออกจากระบบ', 'คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?', () => {
+                clearSession();
+
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-otp').value = '';
+                document.getElementById('login-step1').style.display = 'block';
+                document.getElementById('login-step2').style.display = 'none';
+                document.getElementById('step-1').classList.add('active');
+                document.getElementById('step-1').classList.remove('completed');
+                document.getElementById('step-2').classList.remove('active');
+                document.getElementById('login-btn-next').textContent = 'ถัดไป';
+                document.getElementById('login-btn-next').disabled = false;
+                document.getElementById('dev-otp-display').style.display = 'none';
+
+                if (app.otpTimerId) {
+                    clearInterval(app.otpTimerId);
+                }
+
+                switchScreen('login');
+                showToast('ออกจากระบบสำเร็จ', 'success');
+            });
+        });
+
+        // ===== NAVIGATION FUNCTIONS =====
+
+        app.goToSelection = function() {
+            switchScreen('selection');
+            loadStoresAndTemplates();
+        };
+
+        app.goToHistory = function() {
+            showToast('ฟีเจอร์นี้จะเปิดให้ใช้ในเร็วๆ นี้', 'info');
+        };
+
+        app.goToReview = function() {
+            showToast('ฟีเจอร์นี้จะเปิดให้ใช้ในเร็วๆ นี้', 'info');
+        };
+
+        app.goToMgmtDashboard = function() {
+            switchScreen('mgmt-dashboard');
+            loadMgmtDashboard();
+        };
+
+        app.goToUserMgmt = function() {
+            showToast('ฟีเจอร์นี้จะเปิดให้ใช้ในเร็วๆ นี้', 'info');
+        };
+
+        app.goToTemplateMgmt = function() {
+            showToast('ฟีเจอร์นี้จะเปิดให้ใช้ในเร็วๆ นี้', 'info');
+        };
+
+        // ===== SELECTION SCREEN =====
+
+        async function loadStoresAndTemplates() {
+            try {
+                const storesData = await apiCall('GET', '/stores');
+                const templatesData = await apiCall('GET', '/templates');
+
+                const storeSelect = document.getElementById('selection-store');
+                const templateSelect = document.getElementById('selection-template');
+
+                storeSelect.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                templatesData.templates.forEach(template => {
+                    const option = document.createElement('option');
+                    option.value = template.id;
+                    option.textContent = `${template.name_th} (${template.frequency})`;
+                    option.dataset.templateId = template.id;
+                    option.dataset.templateCode = template.code;
+                    templateSelect.appendChild(option);
+                });
+
+                const storesByBrand = {};
+                storesData.stores.forEach(store => {
+                    if (!storesByBrand[store.brand]) {
+                        storesByBrand[store.brand] = [];
+                    }
+                    storesByBrand[store.brand].push(store);
+                });
+
+                for (const [brand, stores] of Object.entries(storesByBrand)) {
+                    const storeGroup = document.createElement('optgroup');
+                    storeGroup.label = brand;
+
+                    stores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.id;
+                        option.textContent = `${store.name} (${store.district})`;
+                        option.dataset.storeName = store.name;
+
+                        if (app.user?.role === 'SM' && store.name === app.user.store_name) {
+                            option.selected = true;
+                            app.currentStore = store;
+                        }
+                        storeGroup.appendChild(option);
+                    });
+                    storeSelect.appendChild(storeGroup);
+                }
+            } catch (error) {
+                showToast('ไม่สามารถโหลดข้อมูลร้านและแบบฟอร์ม', 'error');
+            }
+        }
+
+        document.getElementById('selection-store').addEventListener('change', (e) => {
+            const option = e.target.options[e.target.selectedIndex];
+            if (option.value) {
+                app.currentStore = {
+                    id: option.value,
+                    name: option.dataset.storeName
+                };
+            }
+        });
+
+        document.getElementById('selection-template').addEventListener('change', (e) => {
+            const option = e.target.options[e.target.selectedIndex];
+            if (option.value) {
+                app.currentTemplate = {
+                    id: option.value,
+                    code: option.dataset.templateCode
+                };
+            }
+        });
+
+        document.getElementById('selection-back-btn').addEventListener('click', () => {
+            switchScreen('home');
+        });
+
+        document.getElementById('selection-start-btn').addEventListener('click', () => {
+            if (!app.currentStore || !app.currentTemplate) {
+                showToast('กรุณาเลือกร้านและแบบฟอร์ม', 'error');
+                return;
+            }
+
+            loadTemplateAndShowDashboard();
+        });
+
+        // ===== INSPECTION DASHBOARD =====
+
+        async function loadTemplateAndShowDashboard() {
+            try {
+                const templateData = await apiCall('GET', `/templates/${app.currentTemplate.id}`);
+
+                app.currentInspection = {
+                    store_name: app.currentStore.name,
+                    template_id: app.currentTemplate.id,
+                    date: new Date().toISOString().split('T')[0],
+                    started_at: new Date().toISOString(),
+                    items: {},
+                    photos: {},
+                    categoryScores: {}
+                };
+
+                templateData.categories.forEach(category => {
+                    app.currentInspection.items[category.id] = [];
+                    category.items.forEach((item, index) => {
+                        app.currentInspection.items[category.id].push({
+                            category_id: category.id,
+                            category_name: category.name_th,
+                            item_index: index,
+                            item_id: item.id,
+                            item_text: item.text_th,
+                            item_type: item.item_type,
+                            require_photo: item.require_photo,
+                            require_note: item.require_note,
+                            score_max: item.score_max,
+                            ai_check_enabled: item.ai_check_enabled,
+                            status: null,
+                            score_value: null,
+                            note: '',
+                            photo_data: null,
+                            timestamp: null
+                        });
+                    });
+                });
+
+                showDashboard(templateData);
+            } catch (error) {
+                showToast('ไม่สามารถโหลดแบบฟอร์ม', 'error');
+            }
+        }
+
+        function showDashboard(templateData) {
+            document.getElementById('dashboard-store-name').textContent = app.currentStore.name;
+            document.getElementById('dashboard-date').textContent = formatDateThai(app.currentInspection.date);
+            document.getElementById('dashboard-manager').textContent = app.user?.name || '-';
+
+            const container = document.getElementById('dashboard-categories-container');
+            container.innerHTML = '';
+
+            templateData.categories.forEach(category => {
+                const items = app.currentInspection.items[category.id] || [];
+                const completed = items.filter(i => i.status !== null).length;
+                const progress = items.length > 0 ? Math.round((completed / items.length) * 100) : 0;
+
+                const card = document.createElement('div');
+                card.className = 'category-card';
+                card.onclick = () => showCategory(category, templateData);
+
+                card.innerHTML = `
+                    <div class="category-name">
+                        <span class="category-icon">${category.icon || '📋'}</span>
+                        <span>${category.name_th}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="progress-text">${completed} / ${items.length}</div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            updateDashboardProgress();
+            switchScreen('dashboard');
+        }
+
+        function updateDashboardProgress() {
+            const totalScore = calculateScore();
+            document.getElementById('progress-percentage').textContent = totalScore + '%';
+
+            const circumference = 2 * Math.PI * 54;
+            const offset = circumference - (totalScore / 100) * circumference;
+            document.getElementById('progress-circle-fill').style.strokeDashoffset = offset;
+
+            let allCompleted = true;
+            for (const items of Object.values(app.currentInspection.items)) {
+                for (const item of items) {
+                    if (item.status === null) {
+                        allCompleted = false;
+                        break;
+                    }
+                }
+                if (!allCompleted) break;
+            }
+
+            document.getElementById('dashboard-submit-btn').disabled = !allCompleted;
+        }
+
+        function showCategory(category, templateData) {
+            app.currentCategoryId = category.id;
+            const items = app.currentInspection.items[category.id] || [];
+            const completed = items.filter(i => i.status !== null).length;
+
+            document.getElementById('category-title').textContent = category.name_th;
+            document.getElementById('category-progress').textContent = `${completed} / ${items.length}`;
+
+            const container = document.getElementById('category-items-container');
+            container.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const itemElement = createItemElement(item, category, index);
+                container.appendChild(itemElement);
+            });
+
+            updateCategoryCompleteButton();
+            switchScreen('category');
+        }
+
+        function createItemElement(item, category, index) {
+            const div = document.createElement('div');
+            const itemKey = `${category.id}-${index}`;
+
+            if (item.require_photo) {
+                div.className = 'item-card photo-required';
+            } else {
+                div.className = 'item-card';
+            }
+
+            let content = `<div class="item-text">${item.item_text}</div>`;
+
+            if (item.require_photo) {
+                content += `<div class="photo-badge">📷 ต้องถ่ายรูป</div>`;
+            }
+
+            if (item.item_type === 'score') {
+                content += `<div class="score-selector" id="score-selector-${itemKey}">`;
+                for (let i = 1; i <= (item.score_max || 5); i++) {
+                    const isSelected = item.score_value === i ? ' active' : '';
+                    content += `<button class="score-btn${isSelected}" data-score="${i}" onclick="app.setItemScore('${itemKey}', ${i})">${i}</button>`;
+                }
+                content += `</div>`;
+            } else {
+                const passClass = item.status === 'pass' ? ' active' : '';
+                const failClass = item.status === 'fail' ? ' active' : '';
+
+                content += `
+                    <div class="item-buttons">
+                        <button class="btn-pass${passClass}" onclick="app.setItemStatus('${itemKey}', 'pass')">✅ ผ่าน</button>
+                        <button class="btn-fail${failClass}" onclick="app.setItemStatus('${itemKey}', 'fail')">❌ ไม่ผ่าน</button>
+                    </div>
+                `;
+            }
+
+            if (item.require_photo || item.item_type === 'photo' || item.item_type === 'photo_text') {
+                const photoClass = (item.require_photo || item.item_type === 'photo' || item.item_type === 'photo_text') ? ' required' : '';
+                content += `<div class="item-camera${photoClass}"><button onclick="app.capturePhoto('${itemKey}')">📷 ถ่ายรูป</button></div>`;
+
+                if (item.photo_data) {
+                    content += `
+                        <div class="photo-preview">
+                            <img src="${item.photo_data}" alt="Photo">
+                            <button class="photo-remove" onclick="app.removePhoto('${itemKey}')">×</button>
+                        </div>
+                    `;
+                }
+            }
+
+            if (item.require_note || item.status === 'fail' || item.item_type === 'photo_text') {
+                const shouldShow = item.require_note || item.status === 'fail' || item.item_type === 'photo_text';
+                const display = shouldShow ? '' : 'display: none;';
+                content += `
+                    <textarea
+                        class="item-note"
+                        id="note-${itemKey}"
+                        placeholder="อธิบายเพิ่มเติม..."
+                        style="${display}"
+                        onchange="app.setItemNote('${itemKey}', this.value)"
+                    >${item.note}</textarea>
+                `;
+            }
+
+            div.innerHTML = content;
+            return div;
+        }
+
+        app.setItemStatus = function(itemKey, status) {
+            const [categoryId, index] = itemKey.split('-');
+            const items = app.currentInspection.items[categoryId];
+            const item = items[parseInt(index)];
+
+            item.status = status;
+            item.timestamp = new Date().toISOString();
+
+            const noteElem = document.getElementById(`note-${itemKey}`);
+            if (noteElem) {
+                if (status === 'fail' || item.require_note || item.item_type === 'photo_text') {
+                    noteElem.style.display = 'block';
+                } else {
+                    noteElem.style.display = 'none';
+                }
+            }
+
+            const category = document.getElementById('category-items-container').children[parseInt(index)];
+            const passBtn = category.querySelector('.btn-pass');
+            const failBtn = category.querySelector('.btn-fail');
+
+            if (passBtn && failBtn) {
+                passBtn.classList.toggle('active', status === 'pass');
+                failBtn.classList.toggle('active', status === 'fail');
+            }
+
+            updateCategoryCompleteButton();
+            updateDashboardProgress();
+        };
+
+        app.setItemScore = function(itemKey, score) {
+            const [categoryId, index] = itemKey.split('-');
+            const items = app.currentInspection.items[categoryId];
+            const item = items[parseInt(index)];
+
+            item.status = 'scored';
+            item.score_value = score;
+            item.timestamp = new Date().toISOString();
+
+            const buttons = document.querySelectorAll(`#score-selector-${itemKey} .score-btn`);
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.score) === score);
+            });
+
+            updateCategoryCompleteButton();
+            updateDashboardProgress();
+        };
+
+        app.setItemNote = function(itemKey, note) {
+            const [categoryId, index] = itemKey.split('-');
+            const items = app.currentInspection.items[categoryId];
+            items[parseInt(index)].note = note;
+        };
+
+        app.capturePhoto = function(itemKey) {
+            app.currentPhotoKey = itemKey;
+            document.getElementById('camera-input').click();
+        };
+
+        app.removePhoto = function(itemKey) {
+            const [categoryId, index] = itemKey.split('-');
+            const items = app.currentInspection.items[categoryId];
+            items[parseInt(index)].photo_data = null;
+
+            delete app.currentInspection.photos[itemKey];
+
+            const category = document.getElementById('category-title').textContent;
+            const categoryObj = { id: categoryId, name_th: category };
+
+            const itemElement = createItemElement(items[parseInt(index)], categoryObj, parseInt(index));
+            const itemContainer = document.getElementById('category-items-container');
+            itemContainer.children[parseInt(index)].replaceWith(itemElement);
+        };
+
+        document.getElementById('camera-input').addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                compressImage(e.target.files[0], (compressedData) => {
+                    const [categoryId, index] = app.currentPhotoKey.split('-');
+                    const items = app.currentInspection.items[categoryId];
+                    items[parseInt(index)].photo_data = compressedData;
+                    app.currentInspection.photos[app.currentPhotoKey] = compressedData;
+
+                    const category = document.getElementById('category-title').textContent;
+                    const categoryObj = { id: categoryId, name_th: category };
+                    const itemElement = createItemElement(items[parseInt(index)], categoryObj, parseInt(index));
+                    const itemContainer = document.getElementById('category-items-container');
+                    itemContainer.children[parseInt(index)].replaceWith(itemElement);
+
+                    showToast('บันทึกรูปสำเร็จ', 'success');
+                });
+            }
+            e.target.value = '';
+        });
+
+        function updateCategoryCompleteButton() {
+            const items = app.currentInspection.items[app.currentCategoryId] || [];
+            const allCompleted = items.every(i => i.status !== null);
+
+            let allRequiredMet = true;
+            items.forEach(item => {
+                if (item.require_photo && !item.photo_data) allRequiredMet = false;
+                if (item.require_note && !item.note) allRequiredMet = false;
+                if (item.item_type === 'photo' && !item.photo_data) allRequiredMet = false;
+                if (item.item_type === 'photo_text' && (!item.photo_data || !item.note)) allRequiredMet = false;
+            });
+
+            document.getElementById('category-complete-btn').disabled = !(allCompleted && allRequiredMet);
+        }
+
+        document.getElementById('category-back-btn').addEventListener('click', () => {
+            switchScreen('dashboard');
+        });
+
+        document.getElementById('category-complete-btn').addEventListener('click', () => {
+            switchScreen('dashboard');
+        });
+
+        document.getElementById('dashboard-back-btn').addEventListener('click', () => {
+            switchScreen('selection');
+        });
+
+        document.getElementById('dashboard-submit-btn').addEventListener('click', () => {
+            switchScreen('summary');
+            showSummary();
+        });
+
+        // ===== SUMMARY SCREEN =====
+
+        function showSummary() {
+            const totalScore = calculateScore();
+            const summaryCard = document.getElementById('summary-score-card');
+
+            summaryCard.className = 'summary-score';
+            if (totalScore >= 95) {
+                summaryCard.classList.add('score-color-excellent');
+            } else if (totalScore >= 90) {
+                summaryCard.classList.add('score-color-good');
+            } else if (totalScore >= 80) {
+                summaryCard.classList.add('score-color-warning');
+            } else {
+                summaryCard.classList.add('score-color-poor');
+            }
+
+            document.getElementById('summary-overall-score').textContent = totalScore;
+
+            const catContainer = document.getElementById('summary-categories-container');
+            catContainer.innerHTML = '';
+
+            for (const [categoryId, score] of Object.entries(app.currentInspection.categoryScores)) {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'card';
+                catDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--spacing-sm);">
+                        <span>${categoryId}</span>
+                        <span style="font-weight: 600; color: var(--primary-red);">${score}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${score}%;"></div>
+                    </div>
+                `;
+                catContainer.appendChild(catDiv);
+            }
+
+            const failedItems = [];
+            for (const [categoryId, items] of Object.entries(app.currentInspection.items)) {
+                items.forEach(item => {
+                    if (item.status === 'fail') {
+                        failedItems.push(item);
+                    }
+                });
+            }
+
+            if (failedItems.length > 0) {
+                document.getElementById('summary-failed-items').style.display = 'block';
+                const failedList = document.getElementById('summary-failed-list');
+                failedList.innerHTML = '';
+
+                failedItems.forEach(item => {
+                    const failDiv = document.createElement('div');
+                    failDiv.className = 'failed-item';
+                    failDiv.innerHTML = `
+                        <div class="failed-item-text">${item.item_text}</div>
+                        ${item.note ? `<div class="failed-item-note">หมายเหตุ: ${item.note}</div>` : ''}
+                        ${item.photo_data ? `<img src="${item.photo_data}" style="width: 100%; border-radius: 8px; margin-top: var(--spacing-sm);">` : ''}
+                    `;
+                    failedList.appendChild(failDiv);
+                });
+            } else {
+                document.getElementById('summary-failed-items').style.display = 'none';
+            }
+
+            document.getElementById('summary-ai-text').textContent = generateAISummary();
+        }
+
+        document.getElementById('summary-back-btn').addEventListener('click', () => {
+            switchScreen('dashboard');
+        });
+
+        document.getElementById('summary-export-btn').addEventListener('click', () => {
+            exportReport();
+        });
+
+        document.getElementById('summary-save-btn').addEventListener('click', async () => {
+            const totalScore = calculateScore();
+            const items = [];
+
+            for (const [categoryId, categoryItems] of Object.entries(app.currentInspection.items)) {
+                categoryItems.forEach((item, index) => {
+                    items.push({
+                        category_id: item.category_id,
+                        category_name: item.category_name,
+                        item_index: item.item_index,
+                        item_text: item.item_text,
+                        status: item.status,
+                        item_type: item.item_type,
+                        score_value: item.score_value,
+                        note: item.note,
+                        photo_data: item.photo_data,
+                        require_photo: item.require_photo,
+                        require_note: item.require_note,
+                        timestamp: item.timestamp
+                    });
+                });
+            }
+
+            const payload = {
+                store_name: app.currentInspection.store_name,
+                template_id: app.currentInspection.template_id,
+                date: app.currentInspection.date,
+                overall_score: totalScore,
+                total_items: items.length,
+                passed_items: items.filter(i => i.status === 'pass').length,
+                categories_scores: app.currentInspection.categoryScores,
+                ai_summary: generateAISummary(),
+                items: items
+            };
+
+            try {
+                await apiCall('POST', '/inspections', payload);
+                showToast('บันทึกรายงานสำเร็จ', 'success');
+                switchScreen('home');
+                showHome();
+            } catch (error) {
+                showToast('ไม่สามารถบันทึกรายงาน', 'error');
+            }
+        });
+
+        // ===== MANAGEMENT DASHBOARD =====
+
+        async function loadMgmtDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('mgmt-date-filter').value = today;
+
+            try {
+                const data = await apiCall('GET', `/dashboard?date=${today}`);
+
+                const statsContainer = document.getElementById('mgmt-stats-container');
+                statsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${data.today?.inspections?.length || 0}</div>
+                        <div class="stat-label">ตรวจวันนี้</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.overall?.avg_score || 0}%</div>
+                        <div class="stat-label">คะแนนเฉลี่ย</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.month_summary?.below_target || 0}</div>
+                        <div class="stat-label">ต่ำกว่าเป้า</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.today?.missing_stores?.length || 0}</div>
+                        <div class="stat-label">ยังไม่ตรวจ</div>
+                    </div>
+                `;
+
+                const tableBody = document.getElementById('mgmt-table-body');
+                tableBody.innerHTML = '';
+
+                if (data.month_summary?.store_ranking) {
+                    data.month_summary.store_ranking.forEach(store => {
+                        const row = document.createElement('tr');
+                        let statusColor = 'var(--primary-green)';
+                        let statusText = 'ผ่าน';
+
+                        if (store.avg_score < 80) {
+                            statusColor = 'var(--error-red)';
+                            statusText = 'ต่ำ';
+                        } else if (store.avg_score < 90) {
+                            statusColor = 'var(--warning-yellow)';
+                            statusText = 'ปานกลาง';
+                        }
+
+                        row.innerHTML = `
+                            <td>${store.store_name}</td>
+                            <td><strong>${store.avg_score}%</strong></td>
+                            <td><span style="color: ${statusColor}; font-weight: 600;">${statusText}</span></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                showToast('ไม่สามารถโหลด Dashboard', 'error');
+            }
+        }
+
+        document.getElementById('mgmt-date-filter').addEventListener('change', (e) => {
+            loadMgmtDashboard();
+        });
+
+        document.getElementById('mgmt-back-btn').addEventListener('click', () => {
+            switchScreen('home');
+        });
+
+        // ===== MODAL HANDLERS =====
+
+        document.getElementById('modal-error-close').addEventListener('click', () => {
+            closeModal('modal-error');
+        });
+
+        // ===== INITIALIZATION =====
+
+        window.addEventListener('load', () => {
+            if (loadSession()) {
+                showHome();
+            } else {
+                switchScreen('login');
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('input, textarea, select')) {
+                return;
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
