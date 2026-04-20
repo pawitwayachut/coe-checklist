@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#E8192C">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SOC">
-    <title>SUPERSPORTS SOC - Store Operation Checklist</title>
+    <meta name="apple-mobile-web-app-title" content="COE">
+    <title>SUPERSPORTS COE - Center of Excellence Checklist</title>
 
     <style>
         :root {
@@ -1162,7 +1162,7 @@
             <div class="login-container">
                 <div class="logo-section">
                     <div class="logo-title">SUPERSPORTS</div>
-                    <div class="logo-subtitle">Store Operation Checklist (SOC)</div>
+                    <div class="logo-subtitle">Center of Excellence Checklist (COE)</div>
                 </div>
 
                 <div class="date-display" id="dateDisplay"></div>
@@ -1385,7 +1385,7 @@
 
         // ====== INDEXEDDB SETUP (offline fallback) ======
         let db;
-        const DB_NAME = 'SOC_DB';
+        const DB_NAME = 'COE_DB';
         const INSPECTIONS_STORE = 'inspections';
         const PHOTOS_STORE = 'photos';
 
@@ -2305,7 +2305,7 @@
         }
 
         function exportReport() {
-            let content = `SUPERSPORTS Store Operation Checklist (SOC) Report\n`;
+            let content = `SUPERSPORTS Center of Excellence Checklist (COE) Report\n`;
             content += `======================================\n\n`;
             content += `Store: ${currentInspection.store_name}\n`;
             content += `Brand: ${currentInspection.store_brand}\n`;
@@ -2344,7 +2344,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `SOC_Report_${currentInspection.store_name}_${currentInspection.date}.txt`;
+            link.download = `COE_Report_${currentInspection.store_name}_${currentInspection.date}.txt`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
