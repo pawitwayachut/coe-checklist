@@ -774,6 +774,136 @@ export async function onRequest(context) {
       return jsonResponse({ message: 'User updated' });
     }
 
+    // ════════════════════════════════════════════════════════
+    // DSR (Daily Sales Report) ROUTES
+    // ════════════════════════════════════════════════════════
+
+    // ── POST /api/dsr/upload ─────────────────────────────
+    if (path === '/api/dsr/upload' && method === 'POST') {
+      if (!hasRole(user, 'DM')) return errorResponse('Forbidden: DM or higher required', 403);
+
+      const body = await request.json();
+      const { month, data_day, kpi, daily, stores, mono } = body;
+
+      if (!month || !data_day || !kpi || !daily || !stores || !mono) {
+        return errorResponse('Missing required fields: month, data_day, kpi, daily, stores, mono');
+      }
+
+      try {
+        // Clear existing data for this month (REPLACE mode)
+        await DB.prepare('DELETE FROM dsr_kpi WHERE month = ?').bind(month).run();
+        await DB.prepare('DELETE FROM dsr_summary WHERE month = ?').bind(month).run();
+        await DB.prepare('DELETE FROM dsr_stores WHERE month = ?').bind(month).run();
+        await DB.prepare('DELETE FROM dsr_mono WHERE month = ?').bind(month).run();
+
+        // Insert KPI
+        await DB.prepare(`
+          INSERT INTO dsr_kpi (month, data_day, ssp_daily, ssp_daily_ly, ssp_mtd, ssp_mtd_ly, ssp_monthly_target,
+            runrate, ly_full_month, bkk_mtd, bkk_mtd_ly, bkk_target, upc_mtd, upc_mtd_ly, upc_target,
+            mono_mtd, mono_mtd_ly, today_target, mtd_target, forecast_landing)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          month, data_day,
+          kpi.ssp_daily || 0, kpi.ssp_daily_ly || 0, kpi.ssp_mtd || 0, kpi.ssp_mtd_ly || 0, kpi.ssp_monthly_target || 0,
+          kpi.runrate || 0, kpi.ly_full_month || 0, kpi.bkk_mtd || 0, kpi.bkk_mtd_ly || 0, kpi.bkk_target || 0,
+          kpi.upc_mtd || 0, kpi.upc_mtd_ly || 0, kpi.upc_target || 0,
+          kpi.mono_mtd || 0, kpi.mono_mtd_ly || 0, kpi.today_target || 0, kpi.mtd_target || 0, kpi.forecast_landing || 0
+        ).run();
+
+        // Insert daily summary (batch)
+        if (Array.isArray(daily) && daily.length > 0) {
+          const summaryStmt = DB.prepare(`
+            INSERT INTO dsr_summary (month, data_day, day_num, day_date, day_type, ly_date, ly_sales, target, actual, bkk_actual, upc_actual)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          const summaryBatch = daily.map(d => summaryStmt.bind(
+            month, data_day, d.day_num, d.day_date, d.day_type, d.ly_date, d.ly_sales || 0, d.target || 0, d.actual || 0, d.bkk_actual || 0, d.upc_actual || 0
+          ));
+          await DB.batch(summaryBatch);
+        }
+
+        // Insert stores (batch)
+        if (Array.isArray(stores) && stores.length > 0) {
+          const storesStmt = DB.prepare(`
+            INSERT INTO dsr_stores (month, data_day, region, dm, store_code, store_name, daily_ty, daily_ly, daily_pct, mtd_ty, mtd_ly, mtd_pct, target, pct_ach, avg_wd, avg_fri, avg_wknd, is_dm_total)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          const storesBatch = stores.map(s => storesStmt.bind(
+            month, data_day, s.region, s.dm, s.store_code, s.store_name, s.daily_ty || 0, s.daily_ly || 0, s.daily_pct || 0,
+            s.mtd_ty || 0, s.mtd_ly || 0, s.mtd_pct || 0, s.target || 0, s.pct_ach || 0, s.avg_wd || 0, s.avg_fri || 0, s.avg_wknd || 0, s.is_dm_total ? 1 : 0
+          ));
+          await DB.batch(storesBatch);
+        }
+
+        // Insert mono (batch)
+        if (Array.isArray(mono) && mono.length > 0) {
+          const monoStmt = DB.prepare(`
+            INSERT INTO dsr_mono (month, data_day, brand, store_name, daily_ty, daily_ly, daily_pct, mtd_ty, mtd_ly, mtd_pct)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          const monoBatch = mono.map(m => monoStmt.bind(
+            month, data_day, m.brand, m.store_name, m.daily_ty || 0, m.daily_ly || 0, m.daily_pct || 0,
+            m.mtd_ty || 0, m.mtd_ly || 0, m.mtd_pct || 0
+          ));
+          await DB.batch(monoBatch);
+        }
+
+        // Log upload
+        await DB.prepare(`
+          INSERT INTO dsr_uploads (month, uploaded_by, uploaded_by_name, file_type, original_filename, data_day)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(month, user.id || user.email, user.name, 'web_upload', 'dashboard_upload', data_day).run();
+
+        return jsonResponse({
+          message: 'DSR data uploaded successfully',
+          month, data_day,
+          daily_rows: daily.length,
+          store_rows: stores.length,
+          mono_rows: mono.length,
+        }, 201);
+      } catch (err) {
+        console.error('DSR upload error:', err);
+        return errorResponse(`Upload failed: ${err.message}`, 500);
+      }
+    }
+
+    // ── GET /api/dsr/data ────────────────────────────────
+    if (path === '/api/dsr/data' && method === 'GET') {
+      const month = url.searchParams.get('month') || new Date().toISOString().substring(0, 7);
+      try {
+        const kpi = await DB.prepare('SELECT * FROM dsr_kpi WHERE month = ?').bind(month).first();
+        const { results: daily } = await DB.prepare('SELECT * FROM dsr_summary WHERE month = ? ORDER BY day_num').bind(month).all();
+        const { results: storesData } = await DB.prepare('SELECT * FROM dsr_stores WHERE month = ? ORDER BY region, dm, is_dm_total, store_code').bind(month).all();
+        const { results: monoData } = await DB.prepare('SELECT * FROM dsr_mono WHERE month = ? ORDER BY brand, store_name').bind(month).all();
+        const uploadInfo = await DB.prepare('SELECT * FROM dsr_uploads WHERE month = ? ORDER BY created_at DESC LIMIT 1').bind(month).first();
+
+        return jsonResponse({ month, kpi: kpi || null, daily, stores: storesData, mono: monoData, upload_info: uploadInfo });
+      } catch (err) {
+        return errorResponse(`Failed to fetch DSR data: ${err.message}`, 500);
+      }
+    }
+
+    // ── GET /api/dsr/months ──────────────────────────────
+    if (path === '/api/dsr/months' && method === 'GET') {
+      const { results } = await DB.prepare('SELECT DISTINCT month FROM dsr_kpi ORDER BY month DESC').all();
+      return jsonResponse({ months: results.map(r => r.month) });
+    }
+
+    // ── DELETE /api/dsr/data ─────────────────────────────
+    if (path === '/api/dsr/data' && method === 'DELETE') {
+      if (!hasRole(user, 'DM')) return errorResponse('Forbidden: DM or higher required', 403);
+      const month = url.searchParams.get('month');
+      if (!month) return errorResponse('month parameter required');
+
+      await DB.prepare('DELETE FROM dsr_kpi WHERE month = ?').bind(month).run();
+      await DB.prepare('DELETE FROM dsr_summary WHERE month = ?').bind(month).run();
+      await DB.prepare('DELETE FROM dsr_stores WHERE month = ?').bind(month).run();
+      await DB.prepare('DELETE FROM dsr_mono WHERE month = ?').bind(month).run();
+      await DB.prepare('DELETE FROM dsr_uploads WHERE month = ?').bind(month).run();
+
+      return jsonResponse({ message: 'DSR data deleted', month });
+    }
+
     return errorResponse('Not found', 404);
 
   } catch (err) {
