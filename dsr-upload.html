@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSR Data Upload</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #002060 0%, #1F3864 100%);
+      color: #1a1a1a;
+      font-size: 14px;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #ffffff;
+      border-bottom: 4px solid #F90507;
+      padding: 24px;
+      margin-bottom: 24px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #002060;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .back-link {
+      color: #002060;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .back-link:hover {
+      background: #f5f5f5;
+    }
+
+    .auth-status {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .auth-status.authenticated {
+      color: #28a745;
+      font-weight: 500;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #002060;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .upload-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .file-slot {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fafafa;
+    }
+
+    .file-slot:hover {
+      border-color: #F90507;
+      background: #fff5f5;
+    }
+
+    .file-slot.active {
+      border-color: #F90507;
+      background: #fff5f5;
+    }
+
+    .file-slot.uploaded {
+      border-color: #28a745;
+      background: #f5fff5;
+    }
+
+    .file-slot.error {
+      border-color: #dc3545;
+      background: #fff5f5;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .slot-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #002060;
+      margin-bottom: 8px;
+    }
+
+    .slot-description {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .slot-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #666;
+      height: 20px;
+    }
+
+    .status-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .status-icon.pending {
+      background: #ccc;
+    }
+
+    .status-icon.uploaded {
+      background: #28a745;
+    }
+
+    .status-icon.error {
+      background: #dc3545;
+    }
+
+    .status-filename {
+      font-size: 12px;
+      color: #28a745;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .status-filename.error {
+      color: #dc3545;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #F90507;
+      color: #ffffff;
+      flex: 1;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #E8192C;
+      box-shadow: 0 4px 12px rgba(249, 5, 7, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #666;
+      border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+      background: #efefef;
+    }
+
+    .log-area {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .log-line {
+      padding: 4px 0;
+      color: #666;
+    }
+
+    .log-line.info {
+      color: #002060;
+    }
+
+    .log-line.success {
+      color: #28a745;
+    }
+
+    .log-line.error {
+      color: #dc3545;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #e9ecef;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #F90507;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #ddd;
+      border-top-color: #F90507;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .alert.warning {
+      background: #fff8e1;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .alert.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .step-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+
+    .step-icon {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background: #002060;
+      color: #ffffff;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 24px;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .step-info.completed .step-icon {
+      background: #28a745;
+    }
+
+    .disabled-message {
+      padding: 12px;
+      background: #fff8e1;
+      color: #856404;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>OPR Daily Sales Report — Data Upload</h1>
+      <div class="header-right">
+        <a href="/" class="back-link">← Dashboard</a>
+        <div class="auth-status" id="authStatus">Checking auth...</div>
+      </div>
+    </div>
+
+    <div id="authError" style="display:none;">
+      <div class="card">
+        <div class="alert error">
+          You are not authenticated. Please login via Cloudflare Access and try again.
+        </div>
+      </div>
+    </div>
+
+    <div id="uploadContainer" style="display:none;">
+      <div class="card">
+        <h2>Step 1: Upload Excel Files</h2>
+        <div class="step-info">
+          <div class="step-icon">1</div>
+          <div>Select all 4 required Excel files below. You can drag and drop or click to browse.</div>
+        </div>
+
+        <div class="upload-grid">
+          <div>
+            <div class="file-slot" id="slot_bkk">
+              <div class="slot-label">ROM_BKK_SALE</div>
+              <div class="slot-description">SSP BKK Region Sales</div>
+              <div class="slot-status">
+                <div class="status-icon pending"></div>
+                <span>Ready to upload</span>
+              </div>
+              <input type="file" class="file-input" id="file_bkk" accept=".xlsx,.xls">
+            </div>
+          </div>
+
+          <div>
+            <div class="file-slot" id="slot_upc">
+              <div class="slot-label">ROM_UPC_SALE</div>
+              <div class="slot-description">SSP UPC Region Sales</div>
+              <div class="slot-status">
+                <div class="status-icon pending"></div>
+                <span>Ready to upload</span>
+              </div>
+              <input type="file" class="file-input" id="file_upc" accept=".xlsx,.xls">
+            </div>
+          </div>
+
+          <div>
+            <div class="file-slot" id="slot_tracking">
+              <div class="slot-label">SSP MTD Sales Tracking</div>
+              <div class="slot-description">Daily Targets & LY Sales</div>
+              <div class="slot-status">
+                <div class="status-icon pending"></div>
+                <span>Ready to upload</span>
+              </div>
+              <input type="file" class="file-input" id="file_tracking" accept=".xlsx,.xls">
+            </div>
+          </div>
+
+          <div>
+            <div class="file-slot" id="slot_mono">
+              <div class="slot-label">Daily Analyst</div>
+              <div class="slot-description">Mono-Brand Stores</div>
+              <div class="slot-status">
+                <div class="status-icon pending"></div>
+                <span>Ready to upload</span>
+              </div>
+              <input type="file" class="file-input" id="file_mono" accept=".xlsx,.xls">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Step 2: Process & Upload to Dashboard</h2>
+
+        <div id="alertArea"></div>
+
+        <div class="log-area" id="logArea" style="display:none;">
+          <div class="log-line info">Processing files...</div>
+        </div>
+
+        <div class="progress-bar" id="progressBar" style="display:none;">
+          <div class="progress-fill"></div>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-primary" id="processBtn" disabled>
+            <span class="spinner" style="display:none; margin-right:6px;"></span>
+            Process & Upload Data
+          </button>
+          <button class="btn-secondary" id="clearBtn">Clear All Files</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Thai holidays for 2025-2026
+    const THAI_HOLIDAYS = {
+      '2025-02-26': 'holiday',
+      '2025-04-06': 'holiday',
+      '2025-04-13': 'holiday',
+      '2025-04-14': 'holiday',
+      '2025-04-15': 'holiday',
+      '2025-05-01': 'holiday',
+      '2025-05-22': 'holiday',
+      '2025-07-20': 'holiday',
+      '2025-07-21': 'holiday',
+      '2025-07-22': 'holiday',
+      '2025-07-28': 'holiday',
+      '2025-08-12': 'holiday',
+      '2025-10-13': 'holiday',
+      '2025-10-14': 'holiday',
+      '2025-10-23': 'holiday',
+      '2025-11-22': 'holiday',
+      '2025-12-05': 'holiday',
+      '2025-12-10': 'holiday',
+      '2025-12-31': 'holiday',
+      '2026-02-26': 'holiday',
+      '2026-04-06': 'holiday',
+      '2026-04-13': 'holiday',
+      '2026-04-14': 'holiday',
+      '2026-04-15': 'holiday',
+      '2026-05-01': 'holiday',
+      '2026-05-22': 'holiday',
+    };
+
+    // Determine day type (weekday, friday, weekend, holiday)
+    function getDayType(dateStr) {
+      if (THAI_HOLIDAYS[dateStr]) return 'holiday';
+      const date = new Date(dateStr);
+      const dow = date.getDay();
+      if (dow === 0) return 'weekend';
+      if (dow === 5) return 'friday';
+      if (dow === 6) return 'weekend';
+      return 'weekday';
+    }
+
+    // Format number for display
+    function fmtM(n) {
+      if (n === null || n === undefined || isNaN(n)) return '0';
+      n = Math.round(n);
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+      return n.toLocaleString();
+    }
+
+    let files = {};
+    let logLines = [];
+
+    function log(message, type = 'info') {
+      logLines.push({ message, type });
+      const logArea = document.getElementById('logArea');
+      if (logArea.style.display === 'none') {
+        logArea.style.display = 'block';
+      }
+      const line = document.createElement('div');
+      line.className = `log-line ${type}`;
+      line.textContent = new Date().toLocaleTimeString() + ' — ' + message;
+      logArea.appendChild(line);
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function alert(message, type = 'warning') {
+      const area = document.getElementById('alertArea');
+      const div = document.createElement('div');
+      div.className = `alert ${type}`;
+      div.textContent = message;
+      area.appendChild(div);
+    }
+
+    function clearAlerts() {
+      document.getElementById('alertArea').innerHTML = '';
+    }
+
+    // File input handlers
+    ['bkk', 'upc', 'tracking', 'mono'].forEach(key => {
+      const slot = document.getElementById(`slot_${key}`);
+      const input = document.getElementById(`file_${key}`);
+
+      slot.addEventListener('click', () => input.click());
+      slot.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        slot.classList.add('active');
+      });
+      slot.addEventListener('dragleave', () => slot.classList.remove('active'));
+      slot.addEventListener('drop', (e) => {
+        e.preventDefault();
+        slot.classList.remove('active');
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          handleFileSelect(key, e.dataTransfer.files[0]);
+        }
+      });
+
+      input.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+          handleFileSelect(key, e.target.files[0]);
+        }
+      });
+    });
+
+    function handleFileSelect(key, file) {
+      if (!file) return;
+      files[key] = file;
+      const slot = document.getElementById(`slot_${key}`);
+      slot.classList.remove('error');
+      slot.classList.add('uploaded');
+
+      const status = slot.querySelector('.slot-status');
+      status.innerHTML = `<div class="status-icon uploaded"></div><span>Uploaded</span>`;
+      const filename = slot.querySelector('.status-filename') || document.createElement('div');
+      filename.className = 'status-filename';
+      filename.textContent = file.name;
+      if (!slot.querySelector('.status-filename')) {
+        slot.appendChild(filename);
+      }
+
+      checkAllFilesReady();
+    }
+
+    function checkAllFilesReady() {
+      const ready = files.bkk && files.upc && files.tracking && files.mono;
+      document.getElementById('processBtn').disabled = !ready;
+    }
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      files = {};
+      ['bkk', 'upc', 'tracking', 'mono'].forEach(key => {
+        document.getElementById(`file_${key}`).value = '';
+        const slot = document.getElementById(`slot_${key}`);
+        slot.classList.remove('uploaded', 'error');
+        const status = slot.querySelector('.slot-status');
+        status.innerHTML = `<div class="status-icon pending"></div><span>Ready to upload</span>`;
+        const filename = slot.querySelector('.status-filename');
+        if (filename) filename.remove();
+      });
+      checkAllFilesReady();
+    });
+
+    // Parse Excel files
+    async function parseFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            resolve(workbook);
+          } catch (err) {
+            reject(new Error(`Failed to parse file: ${err.message}`));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // Parse ROM_BKK / ROM_UPC
+    function parseROM(workbook, region) {
+      log(`Parsing ${region} sales data...`);
+      const data = { daily_history: {}, stores_by_dm: {} };
+
+      // Find latest day sheet with data
+      let latestDay = null;
+      for (let d = 31; d >= 1; d--) {
+        const sheetName = String(d);
+        if (!workbook.SheetNames.includes(sheetName)) continue;
+        const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+        // Check if sheet has data in column F (index 5) starting from row 4
+        let hasData = false;
+        for (let i = 3; i < sheet.length; i++) {
+          const val = sheet[i]?.[5];
+          if (typeof val === 'number' && val > 0) {
+            hasData = true;
+            break;
+          }
+        }
+        if (hasData) {
+          latestDay = d;
+          break;
+        }
+      }
+
+      if (!latestDay) {
+        throw new Error(`No data found in ${region} sheets`);
+      }
+
+      log(`Latest day with data: Day ${latestDay}`);
+
+      // Parse active sheet (latestDay)
+      const activeSheet = XLSX.utils.sheet_to_json(workbook.Sheets[String(latestDay)], { header: 1 });
+      const stores = [];
+
+      for (let i = 3; i < activeSheet.length; i++) {
+        const row = activeSheet[i];
+        if (!row || row.length < 16) continue;
+
+        const code = row[0];
+        const name = row[1];
+
+        // Skip headers and special rows
+        if (!code || code === 'Store Code' || code === 'Target day' || String(code).startsWith('Total') || String(code).startsWith('Target')) {
+          continue;
+        }
+
+        const store = {
+          store_code: String(code).trim(),
+          store_name: String(name || '').trim(),
+          avg_wd: parseFloat(row[2]) || 0,
+          avg_fri: parseFloat(row[3]) || 0,
+          avg_wknd: parseFloat(row[4]) || 0,
+          daily_ty: parseFloat(row[5]) || 0,
+          daily_ly: parseFloat(row[8]) || 0,
+          daily_pct: parseFloat(row[9]) || 0,
+          mtd_ty: parseFloat(row[10]) || 0,
+          mtd_ly: parseFloat(row[11]) || 0,
+          mtd_pct: parseFloat(row[12]) || 0,
+          target: parseFloat(row[13]) || 0,
+          pct_ach: parseFloat(row[15]) || 0,
+          region: region === 'bkk' ? 'BKK' : 'UPC',
+        };
+        stores.push(store);
+      }
+
+      // Assign DMs: for each store, find next row with "Total" in store_name
+      for (let i = 0; i < stores.length; i++) {
+        stores[i].is_dm_total = 0;
+        for (let j = i + 1; j < stores.length; j++) {
+          if (stores[j].store_name.includes('Total')) {
+            stores[i].dm = stores[j].store_name.replace('Total', '').trim();
+            break;
+          }
+        }
+      }
+
+      // Also capture DM totals
+      for (let i = 0; i < stores.length; i++) {
+        if (stores[i].store_name.includes('Total')) {
+          stores[i].is_dm_total = 1;
+          stores[i].dm = stores[i].store_name.replace('Total', '').trim();
+          stores[i].store_code = 'DM_' + stores[i].dm.toUpperCase();
+        }
+      }
+
+      // Parse all day sheets for daily history
+      for (let d = 1; d <= 31; d++) {
+        const sheetName = String(d);
+        if (!workbook.SheetNames.includes(sheetName)) continue;
+        const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+        let dayTy = 0, dayLy = 0;
+        for (let i = 3; i < sheet.length; i++) {
+          const row = sheet[i];
+          if (!row) continue;
+          const code = row[0];
+          if (!code || code === 'Store Code' || String(code).startsWith('Total')) continue;
+          dayTy += parseFloat(row[5]) || 0;
+          dayLy += parseFloat(row[8]) || 0;
+        }
+
+        if (dayTy > 0 || dayLy > 0) {
+          data.daily_history[d] = { daily_ty: dayTy, daily_ly: dayLy };
+        }
+      }
+
+      data.stores = stores;
+      log(`Parsed ${stores.length} stores from ${region}`);
+      return data;
+    }
+
+    // Parse SSP MTD Sales Tracking
+    function parseTracking(workbook) {
+      log('Parsing SSP MTD Sales Tracking...');
+      const data = {
+        kpi: {},
+        daily_targets: {},
+        daily_actuals: {},
+        ly_daily: {},
+        month: null,
+        data_day: null,
+      };
+
+      // Summary sheet
+      if (!workbook.SheetNames.includes('Summary')) {
+        throw new Error('Summary sheet not found in tracking file');
+      }
+
+      const summarySheet = XLSX.utils.sheet_to_json(workbook.Sheets['Summary'], { header: 1 });
+      const dateRegex = /(\d{1,2})[\/-](\w+)[\/-](\d{4})/;
+
+      for (let i = 2; i < summarySheet.length; i++) {
+        const row = summarySheet[i];
+        if (!row || !row[2]) continue;
+
+        const cellVal = row[2];
+        let dateObj = null;
+
+        // Handle Excel date serial numbers
+        if (typeof cellVal === 'number') {
+          dateObj = XLSX.SSF.parse_date_code(cellVal);
+        } else if (typeof cellVal === 'string') {
+          // Try to parse string date
+          const match = cellVal.match(dateRegex);
+          if (match) {
+            dateObj = {
+              y: parseInt(match[3]),
+              m: new Date(`${match[2]} 1, ${match[3]}`).getMonth() + 1,
+              d: parseInt(match[1]),
+            };
+          }
+        }
+
+        if (!dateObj) continue;
+
+        const dateStr = `${dateObj.y}-${String(dateObj.m).padStart(2, '0')}-${String(dateObj.d).padStart(2, '0')}`;
+        const dayNum = dateObj.d;
+
+        if (!data.month) {
+          data.month = dateStr.substring(0, 7);
+          data.data_day = dayNum;
+        }
+
+        const target = parseFloat(row[3]) || 0;
+        const actual = parseFloat(row[4]) || 0;
+
+        if (target > 0) {
+          data.daily_targets[dayNum] = target;
+        }
+        if (actual > 0) {
+          data.daily_actuals[dayNum] = actual;
+        }
+      }
+
+      // Daily Sales sheet for LY
+      if (workbook.SheetNames.includes('Daily Sales')) {
+        const dailySheet = XLSX.utils.sheet_to_json(workbook.Sheets['Daily Sales'], { header: 1 });
+
+        for (let i = 5; i < dailySheet.length; i++) {
+          const row = dailySheet[i];
+          if (!row || !row[0]) continue;
+
+          const cellVal = row[0];
+          let dateObj = null;
+
+          if (typeof cellVal === 'number') {
+            dateObj = XLSX.SSF.parse_date_code(cellVal);
+          }
+
+          if (dateObj) {
+            const dateStr = `${dateObj.y}-${String(dateObj.m).padStart(2, '0')}-${String(dateObj.d).padStart(2, '0')}`;
+            const sales = parseFloat(row[1]) || 0;
+            if (sales > 0) {
+              data.ly_daily[dateStr] = sales;
+            }
+          }
+        }
+      }
+
+      log(`Parsed daily targets and actuals for ${Object.keys(data.daily_targets).length} days`);
+      return data;
+    }
+
+    // Parse Daily Analyst (mono)
+    function parseMono(workbook, currentMonth) {
+      log('Parsing Daily Analyst (mono-brand)...');
+      const data = [];
+
+      // Find sheet matching current month
+      const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const [year, month] = currentMonth.split('-');
+      const monthStr = monthNames[parseInt(month) - 1];
+      const sheetName = `DAILY ANALYST ${monthStr} ${year}`;
+
+      if (!workbook.SheetNames.includes(sheetName)) {
+        log(`Warning: Sheet "${sheetName}" not found, skipping mono-brand data`);
+        return data;
+      }
+
+      const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+      // Row 2 has date headers
+      if (!sheet[1]) return data;
+
+      const dateRow = sheet[1];
+      let latestCol = 0;
+
+      // Find latest column with data
+      for (let c = dateRow.length - 1; c >= 2; c--) {
+        if (dateRow[c]) {
+          latestCol = c;
+          break;
+        }
+      }
+
+      // Rows 4+ have data
+      for (let i = 3; i < sheet.length; i++) {
+        const row = sheet[i];
+        if (!row || !row[2]) continue; // Skip if no brand
+
+        const index = row[0];
+        const brand = String(row[2]).trim();
+        const storeName = String(row[3] || '').trim();
+
+        if (!brand || !storeName) continue;
+
+        const mono = {
+          brand,
+          store_name: storeName,
+          daily_ty: 0,
+          daily_ly: 0,
+          daily_pct: 0,
+          mtd_ty: 0,
+          mtd_ly: 0,
+          mtd_pct: 0,
+        };
+
+        // Scan date columns: pattern is LY, TY, %chg for each date
+        let mtdTy = 0, mtdLy = 0;
+        for (let c = 4; c <= latestCol; c += 3) {
+          const ly = parseFloat(row[c]) || 0;
+          const ty = parseFloat(row[c + 1]) || 0;
+          const pct = parseFloat(row[c + 2]) || 0;
+
+          if (c === 4) {
+            // Latest date
+            mono.daily_ly = ly;
+            mono.daily_ty = ty;
+            mono.daily_pct = pct;
+          }
+
+          mtdLy += ly;
+          mtdTy += ty;
+        }
+
+        mono.mtd_ty = mtdTy;
+        mono.mtd_ly = mtdLy;
+        if (mtdLy > 0) {
+          mono.mtd_pct = ((mtdTy - mtdLy) / mtdLy) * 100;
+        }
+
+        data.push(mono);
+      }
+
+      log(`Parsed ${data.length} mono-brand stores`);
+      return data;
+    }
+
+    // Main process & upload
+    document.getElementById('processBtn').addEventListener('click', async () => {
+      clearAlerts();
+      logLines = [];
+      document.getElementById('logArea').innerHTML = '';
+
+      const btn = document.getElementById('processBtn');
+      const spinner = btn.querySelector('.spinner');
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+
+      document.getElementById('progressBar').style.display = 'block';
+      const progressFill = document.querySelector('.progress-fill');
+
+      try {
+        log('Starting file processing...');
+        progressFill.style.width = '10%';
+
+        // Parse BKK
+        const bkkWb = await parseFile(files.bkk);
+        const bkkData = parseROM(bkkWb, 'bkk');
+        progressFill.style.width = '30%';
+
+        // Parse UPC
+        const upcWb = await parseFile(files.upc);
+        const upcData = parseROM(upcWb, 'upc');
+        progressFill.style.width = '50%';
+
+        // Parse Tracking
+        const trackingWb = await parseFile(files.tracking);
+        const trackingData = parseTracking(trackingWb);
+        progressFill.style.width = '70%';
+
+        // Parse Mono
+        const monoWb = await parseFile(files.mono);
+        const monoStores = parseMono(monoWb, trackingData.month);
+        progressFill.style.width = '85%';
+
+        // Build payload
+        const month = trackingData.month;
+        const dataDay = trackingData.data_day;
+
+        // KPI calculations
+        const allStores = [...bkkData.stores, ...upcData.stores];
+        const sspMtdTy = allStores.filter(s => !s.is_dm_total).reduce((sum, s) => sum + (s.mtd_ty || 0), 0);
+        const sspMtdLy = allStores.filter(s => !s.is_dm_total).reduce((sum, s) => sum + (s.mtd_ly || 0), 0);
+        const bkkMtdTy = bkkData.stores.filter(s => !s.is_dm_total).reduce((sum, s) => sum + (s.mtd_ty || 0), 0);
+        const bkkMtdLy = bkkData.stores.filter(s => !s.is_dm_total).reduce((sum, s) => sum + (s.mtd_ly || 0), 0);
+        const upcMtdTy = upcData.stores.filter(s => !s.is_dm_total).reduce((sum, s) => sum + (s.mtd_ty || 0), 0);
+        const upcMtdLy = upcData.stores.filter(s => !s.is_dm_total).reduce((sum, s) => sum + (s.mtd_ly || 0), 0);
+        const monoMtdTy = monoStores.reduce((sum, m) => sum + (m.mtd_ty || 0), 0);
+        const monoMtdLy = monoStores.reduce((sum, m) => sum + (m.mtd_ly || 0), 0);
+
+        const mtdTarget = Object.values(trackingData.daily_targets).reduce((sum, v) => sum + v, 0);
+        const sspDaily = (bkkData.daily_history[dataDay]?.daily_ty || 0) + (upcData.daily_history[dataDay]?.daily_ty || 0);
+        const sspDailyLy = (bkkData.daily_history[dataDay]?.daily_ly || 0) + (upcData.daily_history[dataDay]?.daily_ly || 0);
+
+        const kpi = {
+          ssp_daily: sspDaily,
+          ssp_daily_ly: sspDailyLy,
+          ssp_mtd: sspMtdTy,
+          ssp_mtd_ly: sspMtdLy,
+          ssp_monthly_target: Object.values(trackingData.daily_targets).reduce((a, b) => a + b, 0),
+          bkk_mtd: bkkMtdTy,
+          bkk_mtd_ly: bkkMtdLy,
+          bkk_target: bkkData.stores.find(s => s.is_dm_total)?.target || 0,
+          upc_mtd: upcMtdTy,
+          upc_mtd_ly: upcMtdLy,
+          upc_target: upcData.stores.find(s => s.is_dm_total)?.target || 0,
+          mono_mtd: monoMtdTy,
+          mono_mtd_ly: monoMtdLy,
+          mtd_target: mtdTarget,
+          today_target: trackingData.daily_targets[dataDay] || 0,
+          runrate: sspMtdTy,
+          ly_full_month: 0,
+          forecast_landing: 0,
+        };
+
+        // Build daily summary
+        const daily = [];
+        for (let d = 1; d <= dataDay; d++) {
+          const dateStr = `${month}-${String(d).padStart(2, '0')}`;
+          daily.push({
+            day_num: d,
+            day_date: dateStr,
+            day_type: getDayType(dateStr),
+            ly_date: dateStr,
+            ly_sales: trackingData.ly_daily[dateStr] || 0,
+            target: trackingData.daily_targets[d] || 0,
+            actual: trackingData.daily_actuals[d] || 0,
+            bkk_actual: bkkData.daily_history[d]?.daily_ty || 0,
+            upc_actual: upcData.daily_history[d]?.daily_ty || 0,
+          });
+        }
+
+        // Prepare stores
+        const stores = allStores.map(s => ({
+          ...s,
+          region: s.region || 'UPC',
+          dm: s.dm || 'UNKNOWN',
+        }));
+
+        progressFill.style.width = '95%';
+        log('Sending data to server...');
+
+        // Upload to API
+        const response = await fetch('/api/dsr/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            month,
+            data_day: dataDay,
+            kpi,
+            daily,
+            stores,
+            mono: monoStores,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+        progressFill.style.width = '100%';
+
+        log('Upload successful!', 'success');
+        alert(`Data uploaded successfully! ${result.kpi_rows} KPI, ${result.daily_rows} daily, ${result.store_rows} stores, ${result.mono_rows} mono-brand entries.`, 'success');
+
+        // Clear files
+        setTimeout(() => {
+          document.getElementById('clearBtn').click();
+        }, 2000);
+      } catch (err) {
+        log(`Error: ${err.message}`, 'error');
+        alert(err.message, 'error');
+        progressFill.style.width = '0%';
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    });
+
+    // Auth check
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'same-origin',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const authStatus = document.getElementById('authStatus');
+          authStatus.className = 'auth-status authenticated';
+          authStatus.textContent = `Authenticated as ${data.user.name}`;
+          document.getElementById('uploadContainer').style.display = 'block';
+        } else {
+          throw new Error('Not authenticated');
+        }
+      } catch (err) {
+        document.getElementById('authError').style.display = 'block';
+      }
+    }
+
+    checkAuth();
+  </script>
+</body>
+</html>
