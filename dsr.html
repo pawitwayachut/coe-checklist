@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPR Daily Sales Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      font-size: 13px;
+    }
+
+    .header {
+      background: #ffffff;
+      border-bottom: 3px solid #F90507;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #002060;
+    }
+
+    .header-info {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex: 1;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header-actions a {
+      color: #002060;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .header-actions a:hover {
+      background: #f5f5f5;
+    }
+
+    .header-actions button {
+      padding: 8px 12px;
+      background: #F90507;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .header-actions button:hover {
+      background: #E8192C;
+    }
+
+    .header-actions button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .kpi-bar {
+      display: flex;
+      gap: 1px;
+      background: #e7e6e6;
+      overflow-x: auto;
+    }
+
+    .kpi-card {
+      flex: 1;
+      min-width: 160px;
+      background: #ffffff;
+      padding: 12px 16px;
+      border-bottom: 3px solid transparent;
+    }
+
+    .kpi-card.daily { border-color: #F90507; }
+    .kpi-card.mtd { border-color: #002060; }
+    .kpi-card.forecast { border-color: #183C92; }
+    .kpi-card.bkk { border-color: #F90507; }
+    .kpi-card.upc { border-color: #002060; }
+    .kpi-card.mono { border-color: #5F615E; }
+
+    .kpi-label {
+      font-size: 11px;
+      color: #666;
+      font-weight: 500;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .kpi-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #002060;
+      margin-bottom: 8px;
+    }
+
+    .kpi-subtext {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .kpi-tags {
+      display: flex;
+      gap: 8px;
+      font-size: 10px;
+    }
+
+    .tag {
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #f5f5f5;
+    }
+
+    .tag.positive { background: #d4edda; color: #155724; }
+    .tag.negative { background: #f8d7da; color: #721c24; }
+
+    .progress-section {
+      background: #ffffff;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #002060;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .progress-bar {
+      height: 20px;
+      background: #e7e6e6;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #F90507, #E8192C);
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .progress-marker {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 2px;
+      background: #002060;
+      opacity: 0.5;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+    }
+
+    select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: #002060;
+    }
+
+    .tab-btn.active {
+      color: #002060;
+      border-bottom-color: #F90507;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    thead {
+      background: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 12px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: #fafafa;
+    }
+
+    .number {
+      text-align: right;
+      font-family: 'Courier New', monospace;
+    }
+
+    .positive { color: #28a745; }
+    .negative { color: #dc3545; }
+
+    .subtotal-row {
+      background: #f0f0f0;
+      font-weight: 600;
+    }
+
+    .dm-section {
+      margin-bottom: 24px;
+    }
+
+    .dm-header {
+      background: #f5f5f5;
+      padding: 12px;
+      font-weight: 600;
+      color: #002060;
+      border-left: 4px solid #F90507;
+      margin-bottom: 8px;
+    }
+
+    .region-filter {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      background: #ffffff;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: #F90507;
+      color: #ffffff;
+      border-color: #F90507;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #F90507;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      background: #ffffff;
+      padding: 40px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      color: #002060;
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .alert.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-info {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .controls {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      table {
+        font-size: 11px;
+      }
+      th, td {
+        padding: 8px;
+      }
+      .kpi-bar {
+        flex-wrap: wrap;
+      }
+      .kpi-card {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>OPR Daily Sales Report</h1>
+    <div class="header-info" id="headerInfo">
+      <div>Loading...</div>
+    </div>
+    <div class="header-actions">
+      <a href="/" id="backLink">← COE Checklist</a>
+      <button id="uploadBtn" style="display:none;">Upload Data</button>
+    </div>
+  </div>
+
+  <div class="kpi-bar" id="kpiBar">
+    <div class="kpi-card loading"><div class="spinner"></div>Loading KPI...</div>
+  </div>
+
+  <div class="progress-section" id="progressSection" style="display:none;">
+    <div class="progress-label">
+      <span>SSP MTD vs Monthly Target</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;">
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-marker" id="progressMarker" style="left: 0;"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="controls">
+      <div class="control-group">
+        <label class="control-label">Month:</label>
+        <select id="monthSelect">
+          <option>Loading...</option>
+        </select>
+      </div>
+      <div class="region-filter" id="regionFilter" style="display:none;">
+        <button class="filter-btn active" data-region="ALL">All</button>
+        <button class="filter-btn" data-region="BKK">BKK</button>
+        <button class="filter-btn" data-region="UPC">UPC</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="summary">Summary</button>
+      <button class="tab-btn" data-tab="stores">Supersports Stores</button>
+      <button class="tab-btn" data-tab="mono">Mono-Brand Stores</button>
+    </div>
+
+    <!-- Summary Tab -->
+    <div id="summary" class="tab-content active">
+      <table id="summaryTable">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Date</th>
+            <th>Day Type</th>
+            <th class="number">LY Sales</th>
+            <th class="number">Target</th>
+            <th class="number">Actual</th>
+            <th class="number">Diff</th>
+            <th class="number">% Change</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Stores Tab -->
+    <div id="stores" class="tab-content">
+      <div id="storesContent"></div>
+    </div>
+
+    <!-- Mono Tab -->
+    <div id="mono" class="tab-content">
+      <table id="monoTable">
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Store</th>
+            <th class="number">Daily TY</th>
+            <th class="number">Daily LY</th>
+            <th class="number">Daily %</th>
+            <th class="number">MTD TY</th>
+            <th class="number">MTD LY</th>
+            <th class="number">MTD %</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentData = null;
+    let currentMonth = null;
+    let selectedRegion = 'ALL';
+    let userData = null;
+    let autoRefreshInterval = null;
+
+    // Format numbers
+    function fmtM(n) {
+      if (n === null || n === undefined || isNaN(n)) return '0';
+      n = Math.round(n);
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+      return n.toLocaleString();
+    }
+
+    function fmtM2(n) {
+      if (n === null || n === undefined || isNaN(n)) return '0.00';
+      return (n / 1000000).toFixed(2);
+    }
+
+    function fmtPctHtml(val, decimalPlaces = 1) {
+      if (val === null || isNaN(val)) val = 0;
+      val = parseFloat(val);
+      const cls = val > 0 ? 'positive' : (val < 0 ? 'negative' : '');
+      const sign = val > 0 ? '+' : '';
+      return `<span class="${cls}">${sign}${val.toFixed(decimalPlaces)}%</span>`;
+    }
+
+    function fmtAchHtml(val, target) {
+      if (!target || val === null) return '';
+      val = parseFloat(val);
+      target = parseFloat(target);
+      let pct = target > 0 ? (val / target) * 100 : 0;
+      let cls = pct >= 100 ? 'positive' : (pct < 90 ? 'negative' : '');
+      return `<span class="${cls}">${pct.toFixed(0)}%</span>`;
+    }
+
+    // Auth check
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'same-origin',
+        });
+        if (response.ok) {
+          userData = await response.json();
+          userData = userData.user;
+          if (userData.role === 'DM' || userData.role === 'GM' || userData.role === 'VP') {
+            document.getElementById('uploadBtn').style.display = 'inline-block';
+          }
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      }
+    }
+
+    // Load months
+    async function loadMonths() {
+      try {
+        const response = await fetch('/api/dsr/months', {
+          credentials: 'same-origin',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const select = document.getElementById('monthSelect');
+          select.innerHTML = '';
+          if (data.months.length === 0) {
+            select.innerHTML = '<option>No data available</option>';
+          } else {
+            data.months.forEach(month => {
+              const option = document.createElement('option');
+              option.value = month;
+              option.textContent = month;
+              select.appendChild(option);
+            });
+            if (!currentMonth) {
+              currentMonth = data.months[0];
+            }
+            select.value = currentMonth;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load months:', err);
+      }
+    }
+
+    // Load DSR data
+    async function loadData(month) {
+      try {
+        currentMonth = month;
+        const response = await fetch(`/api/dsr/data?month=${month}`, {
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          currentData = await response.json();
+          renderDashboard();
+        } else {
+          showEmpty();
+        }
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        showEmpty();
+      }
+    }
+
+    function showEmpty() {
+      document.getElementById('kpiBar').innerHTML = `
+        <div style="width:100%; padding:20px;">
+          <div class="empty-state">
+            <h3>No data for this month</h3>
+            <p>Upload DSR data to see the dashboard.</p>
+            ${userData && (userData.role === 'DM' || userData.role === 'GM' || userData.role === 'VP') ? '<p><a href="/dsr-upload.html" style="color:#F90507;text-decoration:none;font-weight:600;">Upload Data</a></p>' : ''}
+          </div>
+        </div>
+      `;
+      document.getElementById('progressSection').style.display = 'none';
+      document.getElementById('summary').innerHTML = '';
+      document.getElementById('storesContent').innerHTML = '';
+      document.getElementById('monoTable').querySelector('tbody').innerHTML = '';
+    }
+
+    function renderDashboard() {
+      if (!currentData || !currentData.kpi) {
+        showEmpty();
+        return;
+      }
+
+      const kpi = currentData.kpi;
+      const daily = currentData.daily || [];
+      const stores = currentData.stores || [];
+      const mono = currentData.mono || [];
+
+      // Update header info
+      const dataDate = kpi.data_day ? `${currentMonth}-${String(kpi.data_day).padStart(2, '0')}` : currentMonth;
+      const uploadTime = currentData.upload_info ? new Date(currentData.upload_info.created_at).toLocaleString() : 'Never';
+      document.getElementById('headerInfo').innerHTML = `
+        <div>Data Date: <strong>${dataDate}</strong></div>
+        <div>Last Updated: <strong>${uploadTime}</strong></div>
+      `;
+
+      // Render KPI bar
+      const kpiHtml = `
+        <div class="kpi-card daily">
+          <div class="kpi-label">Daily SSP</div>
+          <div class="kpi-value">${fmtM(kpi.ssp_daily)}</div>
+          <div class="kpi-subtext">vs Target: ${fmtPctHtml((kpi.ssp_daily / (kpi.today_target || 1) - 1) * 100)}</div>
+          <div class="kpi-subtext">vs LY: ${fmtPctHtml((kpi.ssp_daily / (kpi.ssp_daily_ly || 1) - 1) * 100)}</div>
+        </div>
+        <div class="kpi-card mtd">
+          <div class="kpi-label">MTD SSP</div>
+          <div class="kpi-value">${fmtM(kpi.ssp_mtd)}</div>
+          <div class="kpi-subtext">vs Target: ${fmtPctHtml((kpi.ssp_mtd / (kpi.mtd_target || 1) - 1) * 100)}</div>
+          <div class="kpi-subtext">vs LY: ${fmtPctHtml((kpi.ssp_mtd / (kpi.ssp_mtd_ly || 1) - 1) * 100)}</div>
+        </div>
+        <div class="kpi-card forecast">
+          <div class="kpi-label">Runrate</div>
+          <div class="kpi-value">${fmtM(kpi.runrate)}</div>
+          <div class="kpi-subtext">Projected month-end</div>
+        </div>
+        <div class="kpi-card bkk">
+          <div class="kpi-label">BKK MTD</div>
+          <div class="kpi-value">${fmtM(kpi.bkk_mtd)}</div>
+          <div class="kpi-subtext">vs LY: ${fmtPctHtml((kpi.bkk_mtd / (kpi.bkk_mtd_ly || 1) - 1) * 100)}</div>
+        </div>
+        <div class="kpi-card upc">
+          <div class="kpi-label">UPC MTD</div>
+          <div class="kpi-value">${fmtM(kpi.upc_mtd)}</div>
+          <div class="kpi-subtext">vs LY: ${fmtPctHtml((kpi.upc_mtd / (kpi.upc_mtd_ly || 1) - 1) * 100)}</div>
+        </div>
+        <div class="kpi-card mono">
+          <div class="kpi-label">MONO MTD</div>
+          <div class="kpi-value">${fmtM(kpi.mono_mtd)}</div>
+          <div class="kpi-subtext">vs LY: ${fmtPctHtml((kpi.mono_mtd / (kpi.mono_mtd_ly || 1) - 1) * 100)}</div>
+        </div>
+      `;
+      document.getElementById('kpiBar').innerHTML = kpiHtml;
+
+      // Progress bar
+      const mtdTarget = kpi.mtd_target || 1;
+      const sspMtd = kpi.ssp_mtd;
+      const monthlyTarget = kpi.ssp_monthly_target || mtdTarget;
+      const progress = Math.min((sspMtd / monthlyTarget) * 100, 100);
+      const markerPos = Math.min((mtdTarget / monthlyTarget) * 100, 100);
+
+      document.getElementById('progressSection').style.display = 'block';
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+      document.getElementById('progressText').textContent = `${fmtM(sspMtd)} / ${fmtM(monthlyTarget)}`;
+      document.getElementById('progressMarker').style.left = markerPos + '%';
+
+      // Summary table
+      const summaryBody = document.querySelector('#summaryTable tbody');
+      summaryBody.innerHTML = '';
+      let weekStart = null;
+      let weekData = { ly_sales: 0, target: 0, actual: 0 };
+
+      daily.forEach((day, idx) => {
+        const row = document.createElement('tr');
+        const dow = new Date(day.day_date).getDay();
+        const isWeekEnd = dow === 0 || idx === daily.length - 1;
+
+        const diff = day.actual - day.target;
+        const pctChg = day.ly_sales > 0 ? ((day.actual - day.ly_sales) / day.ly_sales) * 100 : 0;
+
+        weekData.ly_sales += day.ly_sales;
+        weekData.target += day.target;
+        weekData.actual += day.actual;
+
+        row.innerHTML = `
+          <td>${day.day_num}</td>
+          <td>${day.day_date}</td>
+          <td>${day.day_type}</td>
+          <td class="number">${fmtM(day.ly_sales)}</td>
+          <td class="number">${fmtM(day.target)}</td>
+          <td class="number">${fmtM(day.actual)}</td>
+          <td class="number ${diff > 0 ? 'positive' : 'negative'}">${fmtM(diff)}</td>
+          <td class="number">${fmtPctHtml(pctChg)}</td>
+        `;
+        summaryBody.appendChild(row);
+
+        if (isWeekEnd && weekData.target > 0) {
+          const weekRow = document.createElement('tr');
+          weekRow.className = 'subtotal-row';
+          const weekDiff = weekData.actual - weekData.target;
+          const weekPctChg = weekData.ly_sales > 0 ? ((weekData.actual - weekData.ly_sales) / weekData.ly_sales) * 100 : 0;
+          weekRow.innerHTML = `
+            <td colspan="3">Weekly Subtotal</td>
+            <td class="number">${fmtM(weekData.ly_sales)}</td>
+            <td class="number">${fmtM(weekData.target)}</td>
+            <td class="number">${fmtM(weekData.actual)}</td>
+            <td class="number ${weekDiff > 0 ? 'positive' : 'negative'}">${fmtM(weekDiff)}</td>
+            <td class="number">${fmtPctHtml(weekPctChg)}</td>
+          `;
+          summaryBody.appendChild(weekRow);
+          weekData = { ly_sales: 0, target: 0, actual: 0 };
+        }
+      });
+
+      // Stores table (grouped by DM)
+      const filteredStores = selectedRegion === 'ALL' ? stores : stores.filter(s => s.region === selectedRegion);
+      const storesByDm = {};
+      filteredStores.forEach(s => {
+        if (!storesByDm[s.dm]) storesByDm[s.dm] = [];
+        storesByDm[s.dm].push(s);
+      });
+
+      const storesHtml = Object.entries(storesByDm).map(([dm, dmStores]) => {
+        const rows = dmStores.map(s => `
+          <tr>
+            <td>${s.region}</td>
+            <td>${s.store_code}</td>
+            <td>${s.store_name}</td>
+            <td class="number">${fmtM(s.daily_ty)}</td>
+            <td class="number">${fmtM(s.daily_ly)}</td>
+            <td class="number">${fmtPctHtml(s.daily_pct)}</td>
+            <td class="number">${fmtM(s.mtd_ty)}</td>
+            <td class="number">${fmtM(s.mtd_ly)}</td>
+            <td class="number">${fmtPctHtml(s.mtd_pct)}</td>
+            <td class="number">${fmtM(s.target)}</td>
+            <td class="number">${fmtAchHtml(s.pct_ach, 100)}</td>
+            <td class="number">${fmtM(s.avg_wd)}</td>
+            <td class="number">${fmtM(s.avg_fri)}</td>
+            <td class="number">${fmtM(s.avg_wknd)}</td>
+          </tr>
+        `).join('');
+
+        return `
+          <div class="dm-section">
+            <div class="dm-header">${dm}</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Region</th>
+                  <th>Code</th>
+                  <th>Store</th>
+                  <th class="number">Daily TY</th>
+                  <th class="number">Daily LY</th>
+                  <th class="number">Daily %</th>
+                  <th class="number">MTD TY</th>
+                  <th class="number">MTD LY</th>
+                  <th class="number">MTD %</th>
+                  <th class="number">Target</th>
+                  <th class="number">% Ach</th>
+                  <th class="number">Avg WD</th>
+                  <th class="number">Avg Fri</th>
+                  <th class="number">Avg Wknd</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('storesContent').innerHTML = storesHtml || '<div class="empty-state"><p>No stores to display</p></div>';
+      document.getElementById('regionFilter').style.display = 'flex';
+
+      // Mono table
+      const monoBody = document.querySelector('#monoTable tbody');
+      monoBody.innerHTML = '';
+      mono.forEach(m => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${m.brand}</td>
+          <td>${m.store_name}</td>
+          <td class="number">${fmtM(m.daily_ty)}</td>
+          <td class="number">${fmtM(m.daily_ly)}</td>
+          <td class="number">${fmtPctHtml(m.daily_pct)}</td>
+          <td class="number">${fmtM(m.mtd_ty)}</td>
+          <td class="number">${fmtM(m.mtd_ly)}</td>
+          <td class="number">${fmtPctHtml(m.mtd_pct)}</td>
+        `;
+        monoBody.appendChild(row);
+      });
+    }
+
+    // Event listeners
+    document.getElementById('monthSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        loadData(e.target.value);
+      }
+    });
+
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+      window.location.href = '/dsr-upload.html';
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        selectedRegion = e.target.dataset.region;
+        renderDashboard();
+      });
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tabName = e.target.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+      });
+    });
+
+    // Initialize
+    async function init() {
+      await checkAuth();
+      await loadMonths();
+      if (currentMonth) {
+        await loadData(currentMonth);
+      }
+
+      // Auto-refresh every 5 minutes
+      autoRefreshInterval = setInterval(() => {
+        if (currentMonth) {
+          loadData(currentMonth);
+        }
+      }, 5 * 60 * 1000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
