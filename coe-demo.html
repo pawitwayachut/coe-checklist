@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>COE Store Checklist</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:14px;-webkit-text-size-adjust:100%}
+
+.app-header{
+  background:#fff;border-bottom:3px solid #E8192C;padding:12px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;z-index:50;
+}
+.app-header h1{font-size:16px;font-weight:700;color:#1F3864}
+.store-badge{font-size:11px;background:#E8192C;color:#fff;padding:3px 10px;border-radius:12px}
+
+.user-bar{
+  background:#1F3864;color:#fff;padding:8px 16px;font-size:12px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.user-bar .name{font-weight:600}
+.user-bar .date{opacity:0.8}
+
+.progress-strip{
+  background:#fff;padding:10px 16px;border-bottom:1px solid #e0e0e0;
+  display:flex;align-items:center;gap:12px;
+}
+.progress-track{flex:1;background:#e0e0e0;border-radius:4px;height:6px}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#E8192C,#39B54A);transition:width 0.3s}
+.progress-text{font-size:12px;color:#666;white-space:nowrap}
+.progress-text strong{color:#1F3864}
+
+.categories{padding:8px 12px 120px}
+
+.cat-card{
+  background:#fff;border-radius:12px;margin-bottom:8px;
+  overflow:hidden;border:1px solid #e8e8e8;
+}
+.cat-header{
+  padding:12px 14px;display:flex;align-items:center;gap:10px;
+  cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.cat-icon{font-size:18px}
+.cat-title{flex:1;font-size:13px;font-weight:600;color:#1F3864}
+.cat-progress{
+  font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;
+}
+.cat-progress.empty{background:#f0f0f0;color:#888}
+.cat-progress.partial{background:#FFF3CD;color:#856404}
+.cat-progress.done{background:#D4EDDA;color:#155724}
+.chevron{font-size:11px;color:#888;transition:transform 0.2s}
+.chevron.open{transform:rotate(90deg)}
+
+.cat-items{display:none;border-top:1px solid #f0f0f0}
+.cat-items.open{display:block}
+
+.item{
+  padding:12px 14px;border-bottom:1px solid #f5f5f5;
+}
+.item:last-child{border-bottom:none}
+
+.item-top{display:flex;gap:8px;align-items:flex-start}
+.item-num{
+  font-size:11px;color:#fff;background:#1F3864;
+  min-width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:600;flex-shrink:0;margin-top:1px;
+}
+.item-body{flex:1}
+.item-text-th{font-size:13px;color:#1a1a1a;line-height:1.5}
+.item-text-en{font-size:11px;color:#999;line-height:1.4;margin-top:2px}
+.item-weight{
+  display:inline-block;margin-top:4px;
+  font-size:10px;color:#1F3864;background:#E8ECF4;
+  padding:2px 8px;border-radius:8px;font-weight:500;
+}
+
+.item-actions{
+  display:flex;gap:6px;margin-top:8px;padding-left:30px;
+  align-items:center;flex-wrap:wrap;
+}
+
+.act-btn{
+  height:34px;padding:0 14px;border-radius:8px;
+  border:1.5px solid #ddd;background:#fff;
+  font-size:12px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:4px;
+  transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+}
+.act-btn:active{transform:scale(0.96)}
+.act-btn.pass-btn{border-color:#39B54A;color:#39B54A}
+.act-btn.pass-btn.active{background:#39B54A;color:#fff}
+.act-btn.fail-btn{border-color:#E8192C;color:#E8192C}
+.act-btn.fail-btn.active{background:#E8192C;color:#fff}
+.act-btn.na-btn{border-color:#888;color:#888}
+.act-btn.na-btn.active{background:#888;color:#fff}
+
+.cam-btn{
+  height:34px;padding:0 12px;border-radius:8px;
+  border:1.5px dashed #1F3864;background:#F8F9FD;
+  font-size:12px;color:#1F3864;cursor:pointer;
+  display:flex;align-items:center;gap:4px;
+  transition:all 0.15s;margin-left:auto;
+}
+.cam-btn:active{transform:scale(0.96)}
+.cam-btn.has-photo{border-style:solid;background:#E8ECF4;font-weight:600}
+
+.photo-preview{
+  margin-top:8px;padding-left:30px;display:flex;gap:6px;flex-wrap:wrap;
+}
+.photo-thumb{
+  width:64px;height:64px;border-radius:8px;object-fit:cover;
+  border:1px solid #ddd;cursor:pointer;
+}
+.photo-thumb-wrap{position:relative;display:inline-block}
+.photo-remove{
+  position:absolute;top:-4px;right:-4px;
+  width:18px;height:18px;border-radius:50%;
+  background:#E8192C;color:#fff;border:none;
+  font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  line-height:1;
+}
+
+.note-input{
+  margin-top:6px;margin-left:30px;
+  width:calc(100% - 30px);padding:8px 10px;
+  border:1px solid #ddd;border-radius:8px;
+  font-size:12px;resize:none;height:36px;
+  font-family:inherit;
+}
+.note-input:focus{outline:none;border-color:#1F3864}
+
+.bottom-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#fff;border-top:1px solid #ddd;
+  padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 -2px 10px rgba(0,0,0,0.08);z-index:50;
+}
+.score-summary{font-size:13px;color:#666}
+.score-summary strong{color:#1F3864;font-size:15px}
+.submit-btn{
+  background:#E8192C;color:#fff;border:none;
+  padding:10px 24px;border-radius:24px;
+  font-size:14px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;
+}
+.submit-btn:active{transform:scale(0.96);background:#c4161f}
+.submit-btn:disabled{background:#ccc;cursor:not-allowed}
+
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);z-index:100;
+  align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex}
+.modal-img{max-width:90%;max-height:80vh;border-radius:12px}
+.modal-close{
+  position:fixed;top:16px;right:16px;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.9);border:none;
+  font-size:20px;cursor:pointer;z-index:101;
+  display:flex;align-items:center;justify-content:center;
+}
+
+@media(min-width:600px){
+  body{display:flex;justify-content:center;background:#e0e4ea}
+  .app-wrap{width:420px;background:#f0f2f5;min-height:100vh;position:relative}
+  .bottom-bar{width:420px;left:50%;transform:translateX(-50%)}
+}
+</style>
+</head>
+<body>
+<div class="app-wrap">
+  <div class="app-header">
+    <h1>COE Store Checklist</h1>
+    <span class="store-badge" id="storeBadge">Supersports สยาม</span>
+  </div>
+
+  <div class="user-bar">
+    <span class="name" id="userName">SM: สมชาย (Demo)</span>
+    <span class="date" id="dateLabel"></span>
+  </div>
+
+  <div class="progress-strip">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text"><strong id="pctText">0%</strong></div>
+  </div>
+
+  <div class="categories" id="catContainer"></div>
+
+  <div class="bottom-bar">
+    <div class="score-summary">
+      <strong id="scoreVal">0</strong><span>/100 คะแนน</span><br>
+      <span style="font-size:11px;color:#999" id="itemCount">0/42 ข้อ</span>
+    </div>
+    <button class="submit-btn" id="submitBtn" disabled onclick="showSummary()">ส่งผลตรวจ</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="photoModal" onclick="closeModal()">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <img class="modal-img" id="modalImg" src="">
+</div>
+
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+
+<script>
+const CATS=[
+{icon:"👥",name:"1. People",items:[
+{n:1,th:"สาขามีการจัดอัตรากำลังคนไม่น้อยกว่า 30% ของจำนวนพนักงานทุกคน",en:"Staff planning ≥ 30% of total headcount",w:2},
+{n:2,th:"สาขามีการเช็คพนักงานเข้าใหม่ Welcome Day 1 pack & 100 days pack",en:"Welcome Day 1 & 100 days pack for newcomers",w:2},
+{n:3,th:"พนักงานแต่งกายด้วยชุด Uniform ถูกต้อง มีความรู้สินค้า บุคลิกภาพดี",en:"Uniform, grooming & product knowledge",w:2},
+{n:4,th:"พนักงานและ PC กระตือรือร้น ไม่จับกลุ่มคุย ทักทายลูกค้า",en:"No staff gathering, proactive customer approach",w:3},
+{n:5,th:"ทักทายลูกค้าด้วย 'Supersports สวัสดีค่ะ/ครับ'",en:"Greeting: 'Supersports sawasdee ka/krab'",w:3},
+{n:6,th:"สอบถาม App T1C สะสม/แลกคะแนน นำเสนอ Marketing promo",en:"T1C app, points & marketing promotion",w:2},
+{n:7,th:"พร้อมช่วยเช็คสินค้า นำเสนอ E-Ordering",en:"Stock check & E-ordering assistance",w:3},
+]},
+{icon:"🎨",name:"2. Visual Merchandise",items:[
+{n:8,th:"ป้าย โลโก้ Supersports หน้าร้าน ไฟติดครบทุกดวง",en:"Logo & front signage, all lights working",w:2},
+{n:9,th:"จัดเรียงสินค้าหุ่น See & Buy concept ถูกมาตรฐาน",en:"Mannequin display — See & Buy concept",w:2},
+{n:10,th:"แขวนเสื้อผ้า 16-24 ตัว/Hook (60cm) ระยะห่างเท่ากัน",en:"16-24 pcs per hook, equal spacing",w:2},
+{n:11,th:"ป้าย New, Special Offer, Sale, Clearance ถูกประเภท",en:"Correct ticketing by category",w:2},
+{n:12,th:"จัดเรียงสินค้าบนผนังถูกต้องตามมาตรฐาน VM",en:"Wall display per VM standard",w:2},
+{n:13,th:"หุ่นโชว์สวมถุงเท้าและรองเท้าทุกตัว",en:"Mannequins wear socks & shoes",w:2},
+{n:14,th:"Nesting table ตรงตาม concept แต่ละ Brand",en:"Nesting table per brand concept",w:2},
+{n:15,th:"Focal Point / Sight Lines — ไม่ล้ำเส้นทางเดิน",en:"Focal point & sight lines clear",w:2},
+{n:16,th:"Fronting & Facing ชิดขอบ shelf หันโลโก้ออก",en:"Products front-facing on shelf",w:2},
+{n:17,th:"อุปกรณ์ Marketing/Graphics/หุ่น จัดเก็บเป็นระเบียบ",en:"Marketing equipment stored neatly",w:2},
+{n:18,th:"Window Display สะอาด ไฟติด มีป้ายราคา",en:"Window display clean, lit, priced",w:2},
+]},
+{icon:"⭐",name:"3. Standard",items:[
+{n:19,th:"ห้องลองเสื้อผ้าพร้อมใช้ ไม่มีสิ่งของอื่น ปิดไฟเมื่อไม่ใช้",en:"Fitting rooms clean & ready",w:3},
+{n:20,th:"สินค้าโชว์เต็มพื้นที่ ไม่มี Hook ว่าง",en:"Full display, no empty hooks",w:3},
+{n:21,th:"Hook และ Fixture สภาพพร้อมใช้งาน",en:"Hooks & fixtures in good condition",w:2},
+{n:22,th:"ไม่เก็บของส่วนตัวที่ Fixture หรือพื้นที่ขาย",en:"No personal items on sales floor",w:3},
+{n:23,th:"เปิดเพลงเหมาะสม ระดับเสียงเหมาะสม เพลงจาก MKT เท่านั้น",en:"Music from MKT, appropriate volume",w:3},
+{n:24,th:"เสื้อตัวแรกต้องรีดทุกตัว",en:"Iron every first apparel item",w:3},
+{n:25,th:"ไม่มีกล่องในพื้นที่ขายตั้งแต่เปิดร้าน",en:"No boxes on sales floor at opening",w:3},
+{n:26,th:"กระจกภายใน-นอกร้าน ไม่มีรอยเปื้อน",en:"Mirrors clean inside & outside",w:3},
+{n:27,th:"จัดทำ Size Card & Update 100%",en:"Size cards updated 100%",w:3},
+{n:28,th:"Zoning Count ตรวจนับและ Update สต๊อกทุกวัน",en:"Daily zoning count & stock update",w:2},
+{n:29,th:"จัดทำ Logbook Meeting & Store Visit พร้อมลายเซ็น SM",en:"Meeting logbook with SM signature",w:3},
+{n:30,th:"พนักงานอธิบาย SMILE model ได้ถูกต้อง",en:"Staff can explain SMILE process",w:3},
+{n:31,th:"นับ Stock 100 ตามกลุ่มสินค้าที่กำหนดทุกเดือน",en:"Monthly stock count by category",w:2},
+{n:32,th:"ราคาสินค้า/Ticketing ถูกต้องตาม POS (สุ่ม 15 ชิ้น)",en:"Price audit — random 15 items vs POS",w:2},
+]},
+{icon:"📦",name:"4. Stock Room & Cleaning",items:[
+{n:33,th:"ห้อง Stock เป็นระเบียบ ไม่มีกล่องเกะกะ สะอาด",en:"Stock room tidy, no clutter, clean",w:2},
+{n:34,th:"สินค้าชำรุดมี Logbook ควบคุม อยู่ใน Location กำหนด",en:"Damaged goods logbook & location",w:2},
+{n:35,th:"จัด Location Footwear / สัญลักษณ์กลุ่มเสื้อผ้า by quarter",en:"FW location / apparel symbols by quarter",w:2},
+]},
+{icon:"💡",name:"5. Lighting & Systems",items:[
+{n:36,th:"ไฟสว่างครบทุกดวง อุปกรณ์ระบบทำงานปกติ",en:"All lights on, systems working",w:2},
+]},
+{icon:"💳",name:"6. Cashier Counter",items:[
+{n:37,th:"เคาน์เตอร์แคชเชียร์เป็นระเบียบตาม Standard Guideline",en:"Counter tidy per standard guideline",w:2},
+{n:38,th:"ไม่มีลูกค้ารอเกิน 5 คิว เปิด POS ทุกเครื่องช่วง Peak",en:"Max 5 queue, all POS open at peak",w:2},
+]},
+{icon:"🖼️",name:"7. Graphic",items:[
+{n:39,th:"Graphic Update ตามรุ่นสินค้า สภาพสมบูรณ์ไม่ชำรุด",en:"Graphics updated, not damaged",w:2},
+{n:40,th:"Logo กับสินค้าต้องเป็นแบรนด์เดียวกัน",en:"Logo matches displayed brand",w:2},
+]},
+{icon:"📊",name:"8. Analyze Skill",items:[
+{n:41,th:"พนักงานทราบเป้าสาขา ผู้จัดการวิเคราะห์ Performance ได้",en:"Staff know targets, manager analyzes performance",w:2},
+{n:42,th:"SM/DM เข้าใจ EBIT, OPEX และอธิบายได้",en:"SM/DM understand EBIT & OPEX",w:2},
+{n:43,th:"พนักงานอธิบาย Incoming/Obsolete สินค้าได้ โชว์ครบ",en:"Staff explain incoming & obsolete products",w:3},
+]},
+];
+
+const totalItems = CATS.reduce((s,c) => s + c.items.length, 0);
+const totalWeight = CATS.reduce((s,c) => s + c.items.reduce((ss,i) => ss + i.w, 0), 0);
+
+const state = {};
+const photos = {};
+const notes = {};
+let openCat = 0;
+let pendingPhotoKey = null;
+
+document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+function getKey(ci,ii){return ci+'-'+ii}
+
+function calcScore(){
+  let done=0, earned=0;
+  CATS.forEach((c,ci) => c.items.forEach((item,ii) => {
+    const s = state[getKey(ci,ii)];
+    if(s) done++;
+    if(s==='pass') earned += item.w;
+  }));
+  return {done, earned};
+}
+
+function render(){
+  const {done, earned} = calcScore();
+  const pct = Math.round((done/totalItems)*100);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('pctText').textContent = pct+'%';
+  document.getElementById('scoreVal').textContent = earned;
+  document.getElementById('itemCount').textContent = done+'/'+totalItems+' ข้อ';
+  document.getElementById('submitBtn').disabled = done < totalItems;
+
+  const container = document.getElementById('catContainer');
+  container.innerHTML = '';
+
+  CATS.forEach((cat,ci) => {
+    let catDone=0, catEarned=0, catMax=0;
+    cat.items.forEach((item,ii) => {
+      catMax += item.w;
+      const s = state[getKey(ci,ii)];
+      if(s) catDone++;
+      if(s==='pass') catEarned += item.w;
+    });
+
+    const isOpen = openCat === ci;
+    const cls = catDone===0?'empty': catDone===cat.items.length?'done':'partial';
+
+    let html = `<div class="cat-card">
+      <div class="cat-header" onclick="toggleCat(${ci})">
+        <span class="cat-icon">${cat.icon}</span>
+        <span class="cat-title">${cat.name}</span>
+        <span class="cat-progress ${cls}">${catEarned}/${catMax}</span>
+        <span class="chevron ${isOpen?'open':''}">▸</span>
+      </div>
+      <div class="cat-items ${isOpen?'open':''}">`;
+
+    cat.items.forEach((item,ii) => {
+      const key = getKey(ci,ii);
+      const s = state[key] || '';
+      const itemPhotos = photos[key] || [];
+      const note = notes[key] || '';
+      const hasPhotos = itemPhotos.length > 0;
+
+      html += `<div class="item">
+        <div class="item-top">
+          <span class="item-num">${item.n}</span>
+          <div class="item-body">
+            <div class="item-text-th">${item.th}</div>
+            <div class="item-text-en">${item.en}</div>
+            <span class="item-weight">${item.w} คะแนน</span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="act-btn pass-btn ${s==='pass'?'active':''}" onclick="setItem(${ci},${ii},'pass')">✓ ผ่าน</button>
+          <button class="act-btn fail-btn ${s==='fail'?'active':''}" onclick="setItem(${ci},${ii},'fail')">✗ ไม่ผ่าน</button>
+          <button class="act-btn na-btn ${s==='na'?'active':''}" onclick="setItem(${ci},${ii},'na')">N/A</button>
+          <button class="cam-btn ${hasPhotos?'has-photo':''}" onclick="takePhoto(${ci},${ii})">
+            📷 ${hasPhotos ? itemPhotos.length+' รูป' : 'ถ่ายรูป'}
+          </button>
+        </div>`;
+
+      if(itemPhotos.length > 0){
+        html += `<div class="photo-preview">`;
+        itemPhotos.forEach((src,pi) => {
+          html += `<div class="photo-thumb-wrap">
+            <img class="photo-thumb" src="${src}" onclick="viewPhoto('${src}')">
+            <button class="photo-remove" onclick="removePhoto(${ci},${ii},${pi})">✕</button>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      if(s === 'fail'){
+        html += `<textarea class="note-input" placeholder="หมายเหตุ สิ่งที่ต้องแก้ไข..."
+          onchange="setNote(${ci},${ii},this.value)"
+          onfocus="this.style.height='60px'">${note}</textarea>`;
+      }
+
+      html += `</div>`;
+    });
+
+    html += `</div></div>`;
+    container.innerHTML += html;
+  });
+}
+
+function toggleCat(ci){
+  openCat = openCat===ci ? -1 : ci;
+  render();
+}
+
+function setItem(ci,ii,val){
+  const key = getKey(ci,ii);
+  state[key] = state[key]===val ? '' : val;
+  render();
+}
+
+function setNote(ci,ii,val){
+  notes[getKey(ci,ii)] = val;
+}
+
+function takePhoto(ci,ii){
+  pendingPhotoKey = getKey(ci,ii);
+  document.getElementById('cameraInput').click();
+}
+
+document.getElementById('cameraInput').addEventListener('change', function(e){
+  if(!e.target.files[0] || !pendingPhotoKey) return;
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const maxW = 800;
+      let w = img.width, h = img.height;
+      if(w > maxW){h = h*(maxW/w); w = maxW;}
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      if(!photos[pendingPhotoKey]) photos[pendingPhotoKey] = [];
+      photos[pendingPhotoKey].push(compressed);
+      render();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+function removePhoto(ci,ii,pi){
+  const key = getKey(ci,ii);
+  if(photos[key]){photos[key].splice(pi,1);}
+  render();
+}
+
+function viewPhoto(src){
+  document.getElementById('modalImg').src = src;
+  document.getElementById('photoModal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('photoModal').classList.remove('show');
+}
+
+function showSummary(){
+  const {done, earned} = calcScore();
+  const pct = Math.round((earned/totalWeight)*100);
+  let failItems = [];
+  CATS.forEach((c,ci) => c.items.forEach((item,ii) => {
+    if(state[getKey(ci,ii)]==='fail'){
+      failItems.push({cat:c.name, item:item.th, note:notes[getKey(ci,ii)]||''});
+    }
+  }));
+
+  let msg = `ผลตรวจร้าน: ${earned}/${totalWeight} คะแนน (${pct}%)\n`;
+  msg += `ผ่าน: ${Object.values(state).filter(s=>s==='pass').length} ข้อ\n`;
+  msg += `ไม่ผ่าน: ${failItems.length} ข้อ\n`;
+  msg += `N/A: ${Object.values(state).filter(s=>s==='na').length} ข้อ\n`;
+  if(failItems.length > 0){
+    msg += `\nรายการที่ไม่ผ่าน:\n`;
+    failItems.forEach(f => {
+      msg += `• [${f.cat}] ${f.item}`;
+      if(f.note) msg += ` — ${f.note}`;
+      msg += `\n`;
+    });
+  }
+  let totalPhotos = Object.values(photos).reduce((s,arr)=>s+arr.length,0);
+  msg += `\nรูปถ่ายประกอบ: ${totalPhotos} รูป`;
+  alert(msg);
+}
+
+render();
+</script>
+</body>
+</html>
